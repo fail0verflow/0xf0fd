@@ -1,6 +1,8 @@
 from arch.shared_opcode_types import *
 from arch.shared_mem_types import *
 
+# TODO: This is a hack to adapt the legacy 8051 disassembly code to the new
+# modern infrastructure
 class DictProxy(dict):
 	def __init__(self,**args):
 		if __debug__ and "length" in args and "dests" in args and "pc" in args:
@@ -15,10 +17,6 @@ class DictProxy(dict):
 		try:
 			del self["sim"]
 		except KeyError: pass
-		
-	#def __repr__(self):
-	#	return str(dict( [(i,self.__dict__[i]) for i in self.d if i in self.__dict__ ]  ))
-
 
 def sb(x):
 	if x >= 128:
@@ -110,6 +108,8 @@ class CarryFlagOperand(Operand):
 	def render(self, ds=None):
 		return "c", TYPE_UNSPEC
 
+# TODO: This should be a shared operand type - subclass the numeric class and change the defaults such that
+# it defaults to symbolic?
 class PCJmpDestination(Operand):
 	def __init__(self, calculated_addr):
 		self.addr = calculated_addr

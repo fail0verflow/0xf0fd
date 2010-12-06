@@ -59,8 +59,8 @@ class AssemblyEncoding(Operand):
 		self.opcode = opcode
 		self.operands = operands
 
-	def render(self, ds=None):
-		return "%s\t%s" % (self.opcode, ", ".join([str(i) for i in self.operands])), TYPE_UNSPEC
+	#def render(self, ds=None):
+	#	return "%s\t%s" % (self.opcode, ", ".join([str(i) for i in self.operands])), TYPE_UNSPEC
 
 
 AE = AssemblyEncoding

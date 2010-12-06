@@ -2,7 +2,12 @@ from decode_jmps import *
 from decode_movs import *
 from decode_logical import *
 from decode_math import *
-def decode(pc, bytes):
+
+# Note - this disassembler could be written a lot more elegantly
+def decode(ds, addr, saved_params = None):
+	return decode_bytes(addr, ds.readBytes(addr, 5))
+	
+def decode_bytes(pc, bytes):
 	opc = bytes[0]
 	# 2 byte ACALL
 	if opc & 0x1F == 0x11:
