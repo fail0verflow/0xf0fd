@@ -1,1 +1,1 @@
-import curses_gui
+import qtgui

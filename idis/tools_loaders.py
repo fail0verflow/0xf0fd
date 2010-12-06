@@ -14,7 +14,7 @@ def addBinary(ds, file, base_addr, start_offset, length):
 
 	seg = Segment(file_data[start_offset:end_offset], base_addr)
 	ds.addSegment(seg)
-	
+
 def parseIhexLine(line):
 	if line[0] != ':':
 		print "Start char fail!"

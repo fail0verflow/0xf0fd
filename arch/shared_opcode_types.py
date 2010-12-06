@@ -41,9 +41,10 @@ class ArbitraryNumeric(Operand):
 				numeric_val = -(numeric_val ^ ((1<<width) - 1))
 		
 		self.value = numeric_val
+		self.width = width
 	
 	def render(self, ds=None):
-		return "%#x" % self.value, TYPE_UNSPEC
+		return "%#0*x" % (self.width/8, self.value), TYPE_UNSPEC
 		
 # Only used as argument to directives
 class StringOperand(Operand):
