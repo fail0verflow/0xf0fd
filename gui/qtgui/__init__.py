@@ -80,16 +80,19 @@ class SegmentLineMapper(object):
 STYLE_HEXADDR = 0x80001
 STYLE_COMMENT = 0x80002
 STYLE_OPCODE = 0x80003
+STYLE_ARROW = 0x80004
 
 class DisassemblyGraphicsView(QtGui.QWidget):
 	def __init__(self, ds, mapper):
 		QtGui.QWidget.__init__(self)
 
-		self.addrX = 40
-		self.labelX = 100
-		self.disasmX = 140
-		self.firstOpcodeX = 190
-		self.commentX = 320
+		
+		self.arrowEnd = 75
+		self.addrX = 80
+		self.labelX = 140
+		self.disasmX = 180
+		self.firstOpcodeX = 230
+		self.commentX = 360
 		
 		self.lineSpacing = 14
 		
@@ -104,6 +107,7 @@ class DisassemblyGraphicsView(QtGui.QWidget):
 
 		self.line_addr_map = {}
 	
+		self.addr_line_map = {}
 	def getClickAddr(self, y):
 		lineIndex = y / self.lineSpacing
 		return self.line_addr_map[lineIndex]
@@ -131,6 +135,10 @@ class DisassemblyGraphicsView(QtGui.QWidget):
 		comment_col = QtGui.QColor(127,127,127)
 		opcode_col = QtGui.QColor(0,0,127)
 		
+		pen = p.pen()
+		pen.setWidth(1)
+		p.setPen(pen)
+
 		if styleType == TYPE_SYMBOLIC:
 			p.setBrush(symbolic_col)
 			p.setPen(symbolic_col)
@@ -143,14 +151,34 @@ class DisassemblyGraphicsView(QtGui.QWidget):
 			p.setBrush(opcode_col)
 			p.setPen(opcode_col)
 			p.setFont(self.font)
+		elif styleType == STYLE_ARROW:
+			p.setBrush(fg_col)
+			p.setPen(fg_col)
+			pen = p.pen()
+			pen.setWidth(2)
+			p.setPen(pen)
+			p.setFont(self.font)
 		else:
 			p.setBrush(fg_col)
 			p.setPen(fg_col)
 			p.setFont(self.font)
 			
 	
+	def drawArrow(self, p, col, startLine, endLine):
+		asp = startLine * self.lineSpacing + self.lineSpacing/2
+		aep = endLine * self.lineSpacing + self.lineSpacing/2
+		p.drawLine(col, asp, self.arrowEnd, asp)
+		p.drawLine(col, asp, col, aep)
+		p.drawLine(col, aep, self.arrowEnd, aep)
+		p.drawLine(self.arrowEnd-3, aep-3, self.arrowEnd, aep)
+		p.drawLine(self.arrowEnd-3, aep+3, self.arrowEnd, aep)
+
+		
 	def paintEvent(self, event):
+		arrows = []
+		
 		self.line_addr_map = {}
+		self.addr_line_map = {}
 		
 		# Calculate maximum number of lines on the screen
 		nlines = self.geometry().height() / self.lineSpacing
@@ -229,6 +257,15 @@ class DisassemblyGraphicsView(QtGui.QWidget):
 				p.drawText(self.disasmX, cBaseLine(disasm_start), "%s" % opcode)
 				
 				
+				self.addr_line_map[line_memaddr] = disasm_start + i
+				
+				try:
+					arrows += [ (line_data.addr, dest) 
+								for dest in line_data.cdict["decoding"]["dests"] 
+								if dest != line_data.addr + line_data.length]
+				except KeyError:
+					pass
+					
 				opcodeX = self.firstOpcodeX				
 				for opcode_num in xrange(len(line_data.disasm.operands)):
 					operand = line_data.disasm.operands[opcode_num]
@@ -257,7 +294,28 @@ class DisassemblyGraphicsView(QtGui.QWidget):
 				line_memaddr += line_data.length
 				i += lines_needed
 				i_mod += 1
+			
+			self.applyStyle(p, STYLE_ARROW)
+			arrows = [ (src, dst)
+						for src, dst in arrows
+						if src in self.addr_line_map and dst in self.addr_line_map ]
+
+			def arrowcompare(a, b):
+				asrc, adst = a
+				bsrc, bdst = b
 				
+				if asrc < bsrc and adst > bdst: return 1
+				if asrc > bsrc and adst < bdst: return -1
+				
+				return 0
+				
+			arrows.sort(arrowcompare)
+			arrows = arrows[::-1]
+			
+			pos = 67
+			for src, dst in arrows:
+				self.drawArrow(p, pos, self.addr_line_map[src], self.addr_line_map[dst])
+				pos -= 12
 		finally:
 			p.end()
 		
@@ -271,6 +329,7 @@ class DisassemblyWidget(QtGui.QAbstractScrollArea):
 		self.view = DisassemblyGraphicsView(self.ds, self.sm)
 
 		self.setViewport(self.view)
+		self.ch = CommandHandler(self.ds, self.view)
 		
 		vscroll = self.verticalScrollBar()
 		vscroll.setMinimum(0)
@@ -307,7 +366,7 @@ class DisassemblyWidget(QtGui.QAbstractScrollArea):
 						
 				self.view.setSelAddr(next_addr)
 			else:
-				handleCommand(self.ds, self.window_up, self.view, self.view.getSelAddr(), evt.k)
+				self.ch.handleCommand(self.view.getSelAddr(), evt.k)
 				self.view.update()
 				self.ds.flush()
 				
