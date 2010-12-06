@@ -207,6 +207,7 @@ class DisassemblyGraphicsView(QtGui.QWidget):
 					line_data = self.ds[line_memaddr]
 				except KeyError:
 					line_memaddr += 1
+					break
 					continue
 					
 				# Calculate the top and text baseline of the line	
