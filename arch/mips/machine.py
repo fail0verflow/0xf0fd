@@ -1,15 +1,17 @@
 from arch.common.machine import *
 import arch.common.bits as bits
+from arch.common.builders import get_MachineInstructionBuilder
+MIB = get_MachineInstructionBuilder('arch.mips.machine')
 
-class TableDecoder:
+class TableDecoder(object):
     def __init__(self,col_bitrange, row_bitrange,table):
         self.col_bitrange = col_bitrange
         self.row_bitrange = row_bitrange
         self.table = table
     def decode(self, data):
         decoder_name = self.table[bits.get(data,*self.row_bitrange)][bits.get(data,*self.col_bitrange)]
-        print decoder_name
         return decoder_name and getattr(self,decoder_name)(data)
+
 
 class MIPSDecoder(TableDecoder):
     class SpecialDecoder(TableDecoder):
@@ -44,7 +46,8 @@ class MIPSDecoder(TableDecoder):
         def _d_jr(self,data):
             return None    
         def _d_jalr(self,data):
-            return None   
+            return MIB('jalr',(None,),None)
+
         def _d_movz(self,data):
             return None   
         def _d_movn(self,data):

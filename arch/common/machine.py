@@ -1,11 +1,11 @@
-class Machine:
+class Machine(object):
     def __init__(self, datastore):
         self.datastore = datastore
     def disassemble(self, id):
         """Disassemble a single instruction, returning a MachineInstruction instance."""
         pass
 
-class MachineInstruction:
+class MachineInstruction(object):
     def get_id(self):
         """Return an unique identifier associated with this machine instruction, and it's various representations."""
         pass
@@ -16,7 +16,7 @@ class MachineInstruction:
         """Return a list of Render Tokens representing this machine instruction."""
         pass
 
-class MachineBlock:
+class MachineBlock(object):
     def get_id(self):
         """Return an unique identifier associated with this machine basic-block, and it's various representations."""
         pass
@@ -29,7 +29,7 @@ class MachineBlock:
         # TODO: implement a default instruction aggregation strategy.
         pass
 
-class MachineFunction:
+class MachineFunction(object):
     def get_id(self):
         """Return an unique identifier associated with this machine function, and it's various representations."""
         pass
