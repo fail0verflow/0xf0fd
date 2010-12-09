@@ -1,20 +1,11 @@
 from arch.common.machine import *
+from arch.common.machinecodec import TableCodec
 import arch.common.bits as bits
 from arch.common.builders import get_MachineInstructionBuilder
 MIB = get_MachineInstructionBuilder('arch.mips.machine')
 
-class TableDecoder(object):
-    def __init__(self,col_bitrange, row_bitrange,table):
-        self.col_bitrange = col_bitrange
-        self.row_bitrange = row_bitrange
-        self.table = table
-    def decode(self, data):
-        decoder_name = self.table[bits.get(data,*self.row_bitrange)][bits.get(data,*self.col_bitrange)]
-        return decoder_name and getattr(self,decoder_name)(data)
-
-
-class MIPSDecoder(TableDecoder):
-    class SpecialDecoder(TableDecoder):
+class MIPSCodec(TableCodec):
+    class SpecialCodec(TableCodec):
         def __init__(self):
             table = [ # bits 5..3 down, 2..0 across
                     ['_d_sll',   '_d_movci',  '_d_srl',    '_d_sra',    '_d_sllv',   None,   '_d_srlv',   '_d_srav'],
@@ -26,7 +17,7 @@ class MIPSDecoder(TableDecoder):
                     ['_d_tge',   '_d_tgeu',   '_d_tlt',    '_d_tltu',   '_d_teq',    None,   '_d_tne',    None],
                     [None,  None,   None,   None,   None,   None,   None,   None]
                     ]
-            TableDecoder.__init__(self,(2,0),(5,3),table)
+            TableCodec.__init__(self,(2,0),(5,3),table)
                     
         def _d_sll(self,data):
             return None   
@@ -112,7 +103,7 @@ class MIPSDecoder(TableDecoder):
         def _d_tne(self,data):
             return None    
 
-    class RegimmDecoder(TableDecoder):
+    class RegimmCodec(TableCodec):
         def __init__(self):
             table = [ # bits 20..19 down, 18..16 across
                     ['bltz',      'bgez',   'bltzl',      'bgezl',      None,   None,   None,   None],
@@ -120,7 +111,7 @@ class MIPSDecoder(TableDecoder):
                     ['bltzal',    'bgezal', 'btlzall',    'bgezall',    None,   None,   None,   None],
                     [None,      None,   None,       None,       None,   None,   None,   'synci']
                     ]
-            TableDecoder.__init__(self, (18,16), (20,19), table)
+            TableCodec.__init__(self, (18,16), (20,19), table)
                     
         def _d_bltz(self,data):
             return None      
@@ -152,7 +143,7 @@ class MIPSDecoder(TableDecoder):
             return None             
         def _d_synci(self,data):
             return None
-    class Special2Decoder(TableDecoder):
+    class Special2Codec(TableCodec):
         def __init__(self):
             table = [ # bits 5..3 down, 2..0 across
                     ['madd',  'maddu',  'mul',    None,   'msub',   'msubu',  None,   None],
@@ -164,7 +155,7 @@ class MIPSDecoder(TableDecoder):
                     [None,  None,   None,   None,   None,   None,   None,   None],
                     [None,  None,   None,   None,   None,   None,   None,   'sdbbp']
                     ]
-            TableDecoder.__init__(self, (2,0), (5,3), table)
+            TableCodec.__init__(self, (2,0), (5,3), table)
                     
         def _d_madd(self,data):
             return None  
@@ -182,7 +173,7 @@ class MIPSDecoder(TableDecoder):
             return None                   
         def _d_sdbbp(self,data):
             return None
-    class Special3Decoder(TableDecoder):
+    class Special3Codec(TableCodec):
         def __init__(self):
             table = [ # bits 5..3 down, 2..0 across
                 ['ext',   None,   None,   None,   'ins',    None,   None,   None],
@@ -194,7 +185,7 @@ class MIPSDecoder(TableDecoder):
                 [None,  None,   None,   None,   None,   None,   None,   None],
                 [None,  None,   None,   'rdhwr',  None,   None,   None,   None]
                 ]
-            TableDecoder.__init__(self, (2,0), (5,3), table)
+            TableCodec.__init__(self, (2,0), (5,3), table)
         def _d_ext(self,data):
             return None
         def _d_ins(self,data):
@@ -214,12 +205,12 @@ class MIPSDecoder(TableDecoder):
                 ['_d_ll',      '_d_lwc1',     '_d_lwc2', '_d_pref', None,       '_d_ldc1', '_d_ldc2', None],
                 ['_d_sc',      '_d_swc1',     '_d_swc2', None,   None,       '_d_sdc1', '_d_sdc2', None]
                 ]
-        TableDecoder.__init__(self,(28,26),(31,29),table)
+        TableCodec.__init__(self,(28,26),(31,29),table)
         self.class_decoders = { 
-                'special' :MIPSDecoder.SpecialDecoder(),
-                'regimm'  :MIPSDecoder.RegimmDecoder(),
-                'special2':MIPSDecoder.Special2Decoder(),
-                'special3':MIPSDecoder.Special3Decoder()
+                'special' :MIPSCodec.SpecialCodec(),
+                'regimm'  :MIPSCodec.RegimmCodec(),
+                'special2':MIPSCodec.Special2Codec(),
+                'special3':MIPSCodec.Special3Codec()
                 }
 
     def _d_special(self,data):
@@ -329,8 +320,8 @@ class MIPSDecoder(TableDecoder):
 class MIPSMachine(Machine):
     def __init__(self,datastore):
         self.datastore = datastore
-        self.decoder = MIPSDecoder()
+        self.codec = MIPSCodec()
 
     def disassemble(self, id):
         data = self.datastore.readBytes(id,4)
-        return self.decoder.decode(data)
+        return self.codec.decode(data)
