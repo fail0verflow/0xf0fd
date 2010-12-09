@@ -1,8 +1,10 @@
 from arch.common.machine import *
-from arch.common.machinecodec import TableCodec
 import arch.common.bits as bits
 from arch.common.builders import get_MachineInstructionBuilder
 MIB = get_MachineInstructionBuilder('arch.mips.machine')
+
+MRO = MachineRegisterOperand
+MIO = MachineImmediateOperand
 
 class MIPSCodec(TableCodec):
     class SpecialCodec(TableCodec):
@@ -37,7 +39,7 @@ class MIPSCodec(TableCodec):
         def _d_jr(self,data):
             return None    
         def _d_jalr(self,data):
-            return MIB('jalr',(None,),None)
+            return MIB('jalr',(MRO('target',bits.get(data,25,21)), MRO('return',bits.get(data,15,11))),None)
 
         def _d_movz(self,data):
             return None   
