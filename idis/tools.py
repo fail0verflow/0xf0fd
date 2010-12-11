@@ -10,55 +10,55 @@ from tools_loaders import *
 
 # Undefine a specific opcode [should this have a follow-until-other-assigned mode]?
 def undefine(ds, addr):
-	l = ds[addr].length
-	del ds[addr]
+    l = ds[addr].length
+    del ds[addr]
 
 def decodeAs(ds, dec_type, memaddr):
-	old_mem = ds[memaddr]
-	
-	params = getDecoder(dec_type)(ds, memaddr)
-	
-	if not params:
-		return False
-	
-	# Make sure the range needded for the new data is clear
-	for i in xrange(params["length"]):
-		try:
-			if ds[memaddr + i].typeclass != "default" : return
-		except KeyError: pass
-			
-	# Carry over old label and comment
-	m = MemoryInfo.createFromDecoding(params)
-	m.ds = ds
-	m.label = old_mem.label
-	m.comment = old_mem.comment
-	
-	for i in xrange(params["length"]):
-		try:
-			del ds[memaddr + i]
-		except KeyError:
-			pass
+    old_mem = ds[memaddr]
+    
+    params = getDecoder(dec_type)(ds, memaddr)
+    
+    if not params:
+        return False
+    
+    # Make sure the range needded for the new data is clear
+    for i in xrange(params["length"]):
+        try:
+            if ds[memaddr + i].typeclass != "default" : return
+        except KeyError: pass
+            
+    # Carry over old label and comment
+    m = MemoryInfo.createFromDecoding(params)
+    m.ds = ds
+    m.label = old_mem.label
+    m.comment = old_mem.comment
+    
+    for i in xrange(params["length"]):
+        try:
+            del ds[memaddr + i]
+        except KeyError:
+            pass
 
-	ds[memaddr] = m
+    ds[memaddr] = m
 
 
 
 def follow(ds, addr):
-	try:
-		insn = ds[addr].cdict["decoding"]
-		dests = insn["dests"]
-		
-	except KeyError: return None
+    try:
+        insn = ds[addr].cdict["decoding"]
+        dests = insn["dests"]
+        
+    except KeyError: return None
 
-	for j in dests:
-		if j == addr + ds[addr].length: continue
-		
-		try:
-			dest_info = ds[j]
-		except KeyError: pass
+    for j in dests:
+        if j == addr + ds[addr].length: continue
+        
+        try:
+            dest_info = ds[j]
+        except KeyError: pass
 
 
-		return j
+        return j
 
-	return None
+    return None
 
