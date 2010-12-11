@@ -530,6 +530,9 @@ class MIPSCodec(TableCodec):
 
 
 class MIPSMachine(Machine):
+    shortname = "MIPS"
+    longname = "MIPS"
+	
     def __init__(self,datastore):
         self.datastore = datastore
         self.codec = MIPSCodec()
@@ -537,3 +540,5 @@ class MIPSMachine(Machine):
     def disassemble(self, id):
         data = self.datastore.readBytes(id,4)
         return self.codec.decode(data)
+
+machines = [MIPSMachine]

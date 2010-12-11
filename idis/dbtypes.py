@@ -181,7 +181,7 @@ class MemoryInfo(object):
 				saved_params = {}
 				
 			# re-decode it
-			decoded = getDecoder(typename)(ds, addr, saved_params=saved_params)
+			decoded = getDecoder(ds, typename).disassemble(addr, saved_params=saved_params)
 			assert decoded["length"] == length
 			disasm = decoded["disasm"]
 			self.cdict["decoding"] = decoded
