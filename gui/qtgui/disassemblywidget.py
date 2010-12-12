@@ -31,7 +31,7 @@ class DisassemblyWidget(QtGui.QAbstractScrollArea):
         self.view = DisassemblyGraphicsView(self.ds, self.sm)
 
         self.setViewport(self.view)
-        self.ch = CommandHandler(self.ds, self.view)
+        self.ch = CommandHandler(self.ds, self)
         
         self.vscroll = self.verticalScrollBar()
         self.vscroll.setMinimum(0)
@@ -71,10 +71,12 @@ class DisassemblyWidget(QtGui.QAbstractScrollArea):
                 self.ds.flush()
 
     @QtCore.Slot(int)
-    def gotoAddress(self, val):
-        self.view.setTopAddr(val)
+    def gotoAddress(self, val, top=None):
+        if top == None:
+            top = val
+        self.view.setTopAddr(top)
         self.view.setSelAddr(val)
-        self.vscroll.setValue(val)
+        self.vscroll.setValue(top)
 
 
     def mousePressEvent(self, evt):

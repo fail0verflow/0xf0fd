@@ -73,23 +73,20 @@ class CommandHandler(object):
 		newaddr = idis.tools.follow(self.ds, addr)
 		try:
 			self.ds[newaddr]
-			self.memstack = [(self.view.getTopAddr(), self.view.getSelAddr())]
+			self.memstack = [(self.view.view.getTopAddr(), self.view.view.getSelAddr())]
 				
-			self.view.setTopAddr(newaddr)
-			self.view.setSelAddr(newaddr)
+			self.view.gotoAddress(newaddr)
 				
 		except KeyError:
 			pass
 
-
 	def handleCodeReturn(self, addr):
 		try:
 			top,sel = self.memstack.pop()
-		except AttributeError:
+		except IndexError:
 			return
 		
-		self.view.setTopAddr(top)
-		self.view.setSelAddr(sel)
+		self.view.gotoAddress(sel, top)
 		
 	def __init__(self, ds, view):
 		self.iws = []
