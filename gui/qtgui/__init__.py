@@ -15,6 +15,9 @@ class MainWindow(QtGui.QMainWindow):
         
         disassemblyWidget = DisassemblyWidget(self, ds)
         symbolWidget = SymbolWidget(self, ds)
+        
+
+        symbolWidget.widget.symbolSelected.connect(disassemblyWidget.gotoAddress)
 
         self.setCentralWidget(disassemblyWidget)
         self.addDockWidget(QtCore.Qt.LeftDockWidgetArea, symbolWidget)

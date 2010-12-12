@@ -30,9 +30,14 @@ class DisassemblyGraphicsView(QtGui.QWidget):
         self.font = QtGui.QFont("courier")
         self.font_bold = QtGui.QFont("courier", weight=75)
 
+        # Used for calculating clicks
         self.line_addr_map = {}
-    
+
+        # Used for drawing arrows
         self.addr_line_map = {}
+
+
+
     def getClickAddr(self, y):
         lineIndex = y / self.lineSpacing
         return self.line_addr_map[lineIndex]
@@ -52,7 +57,8 @@ class DisassemblyGraphicsView(QtGui.QWidget):
         self.memaddr_selected = memaddr_selected
         self.update()
     
-    # Apply styling to text to be drawn; depending on text type
+    # Apply styling to text to be drawn; depending on object type
+    # FIXME: This should pull styling info from the config
     def applyStyle(self, p, styleType):
         symbolic_col = QtGui.QColor(0,200,0)
         fg_col = QtGui.QColor(0,0,0)
@@ -98,8 +104,52 @@ class DisassemblyGraphicsView(QtGui.QWidget):
         p.drawLine(self.arrowEnd-3, aep-3, self.arrowEnd, aep)
         p.drawLine(self.arrowEnd-3, aep+3, self.arrowEnd, aep)
 
+    def drawArrows(self, p, arrows):
+        self.applyStyle(p, STYLE_ARROW)
+
+        # Select only those refs that are completely onscreen
+        arrows = [ (src, dst)
+                    for src, dst in arrows
+                    if src in self.addr_line_map and dst in self.addr_line_map ]
+
+        # Primitive arrow ordering by sorting those that are completely outside or inside one-another 
+        # relative to each other.
+        # FIXME: a better ordering would be to build an ordered graph and walk back
+        def arrowcompare(a, b):
+            asrc, adst = a
+            bsrc, bdst = b
+            
+            if asrc < bsrc and adst > bdst: return 1
+            if asrc > bsrc and adst < bdst: return -1
+            
+            return 0
+            
+        arrows.sort(arrowcompare)
+        arrows = arrows[::-1]
         
-    def paintEvent(self, event):
+        # Hacked arrow positioning code
+        pos = 67
+        for src, dst in arrows:
+            self.drawArrow(p, pos, self.addr_line_map[src], self.addr_line_map[dst])
+            pos -= 12
+
+    def calculateLineParameters(self, data):
+        lines_needed = 1
+        disasm_start = 0
+        label_start = 0
+
+        if data.label:
+            lines_needed += 2
+            disasm_start += 2
+            label_start = 1
+
+        return lines_needed, disasm_start, label_start
+
+    def calculateAddressLinecount(self, data):
+        return calculateLineParameters(data)[0]
+
+    def drawWidget(self, p):
+        p.setFont(self.font)
         arrows = []
         
         self.line_addr_map = {}
@@ -108,140 +158,120 @@ class DisassemblyGraphicsView(QtGui.QWidget):
         # Calculate maximum number of lines on the screen
         nlines = self.geometry().height() / self.lineSpacing
         
+        # Erase the widget
+        bg_brush = QtGui.QBrush(QtGui.QColor(255,255,255))
+        p.fillRect(self.geometry(), bg_brush)
+        
+        # line marker background
+        ln_brush1 = QtGui.QColor(250,250,255)
+        
+        # selected line background
+        sel_line =  QtGui.QColor(200,200,255)
+
+        line_memaddr = self.memaddr_top
+
+        i = 0
+        i_mod = 0
+        while i < nlines:
+            try:
+                line_data = self.ds[line_memaddr]
+            except KeyError:
+                line_memaddr += 1
+                break
+                continue
+                
+            # Calculate the top and text baseline of the line   
+            linetop = self.lineSpacing * i
+            def cBaseLine(ln):
+                return linetop + self.lineSpacing * ln + 12
+            
+            #
+            # layout is:
+            #   0001
+            #   0001   label: 
+            #   0001       opcode
+            #   0002
+            #
+            #
+            
+            lines_needed, disasm_start, label_start = self.calculateLineParameters(line_data)
+
+
+            label = line_data.label            
+            # draw the background of the line
+            if line_memaddr == self.memaddr_selected:
+                p.fillRect(0,linetop,self.geometry().width(),self.lineSpacing*lines_needed, sel_line)
+            elif (i_mod) % 2 == 0:
+                p.fillRect(0,linetop,self.geometry().width(),self.lineSpacing*lines_needed, ln_brush1)
+
+            # draw the label [if any]
+            if label:
+                self.applyStyle(p, TYPE_SYMBOLIC)
+                p.drawText(self.labelX, cBaseLine(label_start), "%s:" % label)
+
+
+            opcode = line_data.disasm.opcode
+            
+            # Draw addresses
+            self.applyStyle(p, STYLE_HEXADDR)
+            for indiv_line in xrange(lines_needed):
+                self.line_addr_map[indiv_line + i] = line_memaddr
+                p.drawText(self.addrX, cBaseLine(indiv_line), "%04x:" % line_memaddr)
+            
+            
+            self.applyStyle(p, STYLE_OPCODE)
+            p.drawText(self.disasmX, cBaseLine(disasm_start), "%s" % opcode)
+            
+            
+            self.addr_line_map[line_memaddr] = disasm_start + i
+            
+            try:
+                arrows += [ (line_data.addr, dest) 
+                            for dest in line_data.cdict["decoding"]["dests"] 
+                            if dest != line_data.addr + line_data.length]
+            except KeyError:
+                pass
+                
+            opcodeX = self.firstOpcodeX             
+            for opcode_num in xrange(len(line_data.disasm.operands)):
+                operand = line_data.disasm.operands[opcode_num]
+                last_operand = opcode_num == len(line_data.disasm.operands) - 1
+                
+                text, opc_type = operand.render(self.ds)
+                
+                self.applyStyle(p, opc_type)
+                opcode_text = text
+                opcode_width = p.fontMetrics().width(opcode_text);
+                p.drawText(opcodeX, cBaseLine(disasm_start), opcode_text)
+                opcodeX += opcode_width
+                
+                
+                # Draw the ", " separator
+                self.applyStyle(p, None)
+                if not last_operand:
+                    p.drawText(opcodeX, cBaseLine(disasm_start), ", ")
+                    opcodeX += p.fontMetrics().width(", ");
+
+
+            if line_data.comment:
+                self.applyStyle(p, STYLE_COMMENT)
+                p.drawText(self.commentX, cBaseLine(disasm_start), "; %s" % line_data.comment)
+                
+            line_memaddr += line_data.length
+            i += lines_needed
+            i_mod += 1
+        
+        self.drawArrows(p, arrows)
+
+
+
+    def paintEvent(self, event):
         p = QtGui.QPainter()
         p.begin(self)
-        p.setFont(self.font)
-        
+        # Wrap the actual paint code to prevent QT crashes
+        # if we throw an exception
         try:
-            # Erase the widget
-            bg_brush = QtGui.QBrush(QtGui.QColor(255,255,255))
-            p.fillRect(self.geometry(), bg_brush)
-            
-            # line marker background
-            ln_brush1 = QtGui.QColor(250,250,255)
-            
-            # selected line background
-            sel_line =  QtGui.QColor(200,200,255)
-
-            line_memaddr = self.memaddr_top
-
-            i = 0
-            i_mod = 0
-            while i < nlines:
-                try:
-                    line_data = self.ds[line_memaddr]
-                except KeyError:
-                    line_memaddr += 1
-                    break
-                    continue
-                    
-                # Calculate the top and text baseline of the line   
-                linetop = self.lineSpacing * i
-                def cBaseLine(ln):
-                    return linetop + self.lineSpacing * ln + 12
-                
-                #
-                # layout is:
-                #   0001
-                #   0001   label: 
-                #   0001       opcode
-                #   0002
-                #
-                #
-                
-                lines_needed = 1
-                disasm_start = 0
-                
-                label = line_data.label
-                if label:
-                    lines_needed += 2
-                    disasm_start += 2
-                    label_start   = 1
-                
-                # draw the background of the line
-                if line_memaddr == self.memaddr_selected:
-                    p.fillRect(0,linetop,self.geometry().width(),self.lineSpacing*lines_needed, sel_line)
-                elif (i_mod) % 2 == 0:
-                    p.fillRect(0,linetop,self.geometry().width(),self.lineSpacing*lines_needed, ln_brush1)
-
-                # draw the label [if any]
-                if label:
-                    self.applyStyle(p, TYPE_SYMBOLIC)
-                    p.drawText(self.labelX, cBaseLine(label_start), "%s:" % label)
-
-
-                opcode = line_data.disasm.opcode
-                
-                # Draw addresses
-                self.applyStyle(p, STYLE_HEXADDR)
-                for indiv_line in xrange(lines_needed):
-                    self.line_addr_map[indiv_line + i] = line_memaddr
-                    p.drawText(self.addrX, cBaseLine(indiv_line), "%04x:" % line_memaddr)
-                
-                
-                self.applyStyle(p, STYLE_OPCODE)
-                p.drawText(self.disasmX, cBaseLine(disasm_start), "%s" % opcode)
-                
-                
-                self.addr_line_map[line_memaddr] = disasm_start + i
-                
-                try:
-                    arrows += [ (line_data.addr, dest) 
-                                for dest in line_data.cdict["decoding"]["dests"] 
-                                if dest != line_data.addr + line_data.length]
-                except KeyError:
-                    pass
-                    
-                opcodeX = self.firstOpcodeX             
-                for opcode_num in xrange(len(line_data.disasm.operands)):
-                    operand = line_data.disasm.operands[opcode_num]
-                    last_operand = opcode_num == len(line_data.disasm.operands) - 1
-                    
-                    text, opc_type = operand.render(self.ds)
-                    
-                    self.applyStyle(p, opc_type)
-                    opcode_text = text
-                    opcode_width = p.fontMetrics().width(opcode_text);
-                    p.drawText(opcodeX, cBaseLine(disasm_start), opcode_text)
-                    opcodeX += opcode_width
-                    
-                    
-                    # Draw the ", " separator
-                    self.applyStyle(p, None)
-                    if not last_operand:
-                        p.drawText(opcodeX, cBaseLine(disasm_start), ", ")
-                        opcodeX += p.fontMetrics().width(", ");
-
-
-                if line_data.comment:
-                    self.applyStyle(p, STYLE_COMMENT)
-                    p.drawText(self.commentX, cBaseLine(disasm_start), "; %s" % line_data.comment)
-                    
-                line_memaddr += line_data.length
-                i += lines_needed
-                i_mod += 1
-            
-            self.applyStyle(p, STYLE_ARROW)
-            arrows = [ (src, dst)
-                        for src, dst in arrows
-                        if src in self.addr_line_map and dst in self.addr_line_map ]
-
-            def arrowcompare(a, b):
-                asrc, adst = a
-                bsrc, bdst = b
-                
-                if asrc < bsrc and adst > bdst: return 1
-                if asrc > bsrc and adst < bdst: return -1
-                
-                return 0
-                
-            arrows.sort(arrowcompare)
-            arrows = arrows[::-1]
-            
-            pos = 67
-            for src, dst in arrows:
-                self.drawArrow(p, pos, self.addr_line_map[src], self.addr_line_map[dst])
-                pos -= 12
+            self.drawWidget(p)
         finally:
             p.end()
 

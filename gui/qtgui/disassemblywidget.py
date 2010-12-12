@@ -21,7 +21,6 @@ class SegmentLineMapper(object):
             
         raise ValueError, "Address could not be mapped"
         
-
 class DisassemblyWidget(QtGui.QAbstractScrollArea):
     def __init__(self, parent, ds):
         super(DisassemblyWidget, self).__init__(parent)
@@ -34,11 +33,12 @@ class DisassemblyWidget(QtGui.QAbstractScrollArea):
         self.setViewport(self.view)
         self.ch = CommandHandler(self.ds, self.view)
         
-        vscroll = self.verticalScrollBar()
-        vscroll.setMinimum(0)
-        vscroll.setMaximum(self.sm.getLineCount())
-        QtCore.QObject.connect(vscroll, QtCore.SIGNAL('valueChanged(int)'), self.scrollEvent)
+        self.vscroll = self.verticalScrollBar()
+        self.vscroll.setMinimum(0)
+        self.vscroll.setMaximum(self.sm.getLineCount())
 
+
+        QtCore.QObject.connect(self.vscroll, QtCore.SIGNAL('valueChanged(int)'), self.scrollEvent)
         self.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOn)
 
     def keyPressEvent(self, evt):
@@ -49,35 +49,42 @@ class DisassemblyWidget(QtGui.QAbstractScrollArea):
         else:
             if evt.k == QtCore.Qt.Key_Down:
                 selected_addr = self.view.getSelAddr()
-                next_addr = selected_addr + ds[selected_addr].length
+                next_addr = selected_addr + self.ds[selected_addr].length
                 self.view.setSelAddr(next_addr)
             
             elif evt.k == QtCore.Qt.Key_Up:
-                # Hack
                 selected_addr = self.view.getSelAddr()
-                next_addr = selected_addr - 1
+                next_addr = self.ds.findBeforeAddress(selected_addr - 1)
                 
-                while 1:
-                    if next_addr < 0:
-                        next_addr = 0
-                        break
-                    try:
-                        ds[next_addr]
-                        break
-                    except KeyError:
-                        next_addr -= 1
-                        
+                if next_addr == None:
+                    return
+
+                if next_addr < self.view.getTopAddr():
+                    self.view.setTopAddr(next_addr)
+
                 self.view.setSelAddr(next_addr)
+
+
             else:
                 self.ch.handleCommand(self.view.getSelAddr(), evt.k)
                 self.view.update()
                 self.ds.flush()
-                
+
+    @QtCore.Slot(int)
+    def gotoAddress(self, val):
+        self.view.setTopAddr(val)
+        self.view.setSelAddr(val)
+        self.vscroll.setValue(val)
+
+
     def mousePressEvent(self, evt):
         self.view.setSelAddr(self.view.getClickAddr(evt.y()))
         
     def scrollEvent(self, value):
-        self.view.setTopAddr(value)
+        seek_addr = self.ds.findBeforeAddress(value)
+        assert seek_addr != None
+
+        self.view.setTopAddr(seek_addr)
         
     def paintEvent(self, event):
         self.view.paintEvent(event)

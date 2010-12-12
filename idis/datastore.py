@@ -87,6 +87,9 @@ class DataStore:
 
         self.symbols = SymbolList(self.conn, "symbols")
         self.comments = CommentList(self.conn, "comments")
+
+
+
     def addrs(self):
         self.flushInsertQueue()
 
@@ -216,8 +219,26 @@ class DataStore:
         mi.ds = self
         self[addr] = mi
         return mi
-    
-    
+   
+    # Find the first address that is numerically previous to 
+    # the argument
+    def findBeforeAddress(self, seekaddr):
+        row = self.c.execute('''SELECT addr, length
+                    FROM memory_info 
+                    WHERE addr <= ? ORDER BY addr DESC LIMIT 1''',
+                  (seekaddr,)).fetchone()
+
+        if not row:
+            return None
+
+        addr, length = row
+
+        # FIXME: Hack to make default objects work
+        if seekaddr >= addr + length:
+            return seekaddr
+
+        return row[0]
+
     def __getitem__(self, addr):
         self.meminfo_fetches += 1
         # See if the object is already around

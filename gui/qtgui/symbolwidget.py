@@ -45,7 +45,8 @@ class SymbolModel(QtCore.QAbstractItemModel):
             return QtCore.QQModelIndex()
 
         addr, name = self.datastore.symbols.listInterface(self.order, self.order_dir, row)
-        return self.createIndex(row, col, addr)
+
+        return self.createIndex(row, col)
 
     def parent(self, index):
         return QtCore.QModelIndex()
@@ -60,11 +61,14 @@ class SymbolModel(QtCore.QAbstractItemModel):
 
 
 class SymbolTableView(QtGui.QTableView):
+
+    symbolSelected = QtCore.Signal(long)
+
     def __init__(self, parent_win, ds):
         super(SymbolTableView, self).__init__()
 
         self.model = SymbolModel(ds)
-
+        self.datastore = ds
         self.setModel(self.model)
         self.setShowGrid(False)
 
@@ -85,6 +89,17 @@ class SymbolTableView(QtGui.QTableView):
 
         self.setSelectionMode(QtGui.QAbstractItemView.SingleSelection)
         self.setSelectionBehavior(QtGui.QAbstractItemView.SelectRows)
+    
+    def selectionChanged(self, selected, deselected):
+        super(SymbolTableView, self).selectionChanged(selected, deselected)
+        
+        indicies = selected.indexes()
+        if indicies:
+            row = indicies[0].row()
+            addr, name = self.datastore.symbols.listInterface(self.model.order, self.model.order_dir, row)
+        
+            self.symbolSelected.emit(long(addr))
+
 
 class SymbolWidget(QtGui.QDockWidget):
     def __init__(self, parent_win, ds):
