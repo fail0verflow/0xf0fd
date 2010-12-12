@@ -32,8 +32,8 @@ class InspectModel(QtCore.QAbstractItemModel):
 		self.root.addChild(TreeItem("addr", "%04x" % info.addr))
 		self.root.addChild(TreeItem("length", "%d" % info.length))
 		
-		self.root.addChild(TreeItem("addr", "%s" % info.label))
-		self.root.addChild(TreeItem("length", "%s" % info.comment))
+		self.root.addChild(TreeItem("label", "%s" % info.label))
+		self.root.addChild(TreeItem("comment", "%s" % info.comment))
 		
 		def dumpDict(node, dct):
 			for k,v in dct.iteritems():
@@ -96,9 +96,9 @@ class InspectModel(QtCore.QAbstractItemModel):
 		
 		return self.createIndex(parentItem.row, 0, parentItem)
 			
-class InspectWindow(QtGui.QWidget):
+class InspectWidget(QtGui.QWidget):
 	def __init__(self, info):
-		super(InspectWindow, self).__init__()
+		super(InspectWidget, self).__init__()
 		self.treeview = QtGui.QTreeView()
 		self.model = InspectModel(info)
 		self.treeview.setModel(self.model)
@@ -109,3 +109,9 @@ class InspectWindow(QtGui.QWidget):
 		self.setLayout(mainLayout)
 		self.resize(600,400)
 		self.treeview.setColumnWidth(0,200)
+
+class InspectWindow(QtGui.QDockWidget):
+    def __init__(self, info):
+        super(InspectWindow, self).__init__("Inspector")
+        self.widget = InspectWidget(info)
+        self.setWidget(self.widget)

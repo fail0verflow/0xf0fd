@@ -14,7 +14,7 @@ def dbghook(type, value, tb):
 
     print
     pdb.pm()
-sys.excepthook = dbghook
+#sys.excepthook = dbghook
 ############### END PM HACK ######################
 
 

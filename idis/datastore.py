@@ -47,7 +47,21 @@ class SymbolList(object):
         if text:
             self.conn.execute('''INSERT INTO symbols (addr, name) VALUES (?,?)''',
                 (addr,text))
-              
+    
+    def listInterface(self, order, order_dir, index):
+        assert order in ["addr", "name"]
+        assert order_dir in ["ASC", "DESC"]
+
+        return self.conn.execute('''SELECT addr, name
+                                    FROM symbols
+                                    ORDER BY %s %s
+                                    LIMIT ?, 1''' % (order, order_dir), (index,)).fetchone()
+
+
+    def __len__(self):
+        return self.conn.execute('''SELECT COUNT(*) FROM symbols''').fetchall()[0][0]
+
+
 class DataStore:
     def __init__(self, filename):
         self.updates = 0
@@ -125,7 +139,6 @@ class DataStore:
                 attrs BLOB
                 )''')
         
-        
         self.c.execute('''
             CREATE TABLE IF NOT EXISTS comments
                 (addr INTEGER,
@@ -133,6 +146,7 @@ class DataStore:
                 position INTEGER,
                 CONSTRAINT pk PRIMARY KEY (addr,position)
                 )''')
+
 
     def __iter__(self):
         self.flushInsertQueue()
