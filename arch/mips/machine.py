@@ -1,8 +1,11 @@
 from arch.common.machine import *
 import arch.common.bits as bits
 from arch.common.builders import get_MachineInstructionBuilder
+import struct
 
 MRO = MachineRegisterOperand
+#TODO: implement a real MachineFloatingpointRegisterOperand
+MFRO = MachineRegisterOperand
 MIO = MachineImmediateOperand
 
 class MIPSMachineInstruction(MachineInstruction):
@@ -16,6 +19,38 @@ class MIPSMachineInstruction(MachineInstruction):
 MIB = get_MachineInstructionBuilder('arch.mips.machine',MIPSMachineInstruction)
 
 class MIPSCodec(TableCodec):
+    class BSHFLCodec(TableCodec):
+        def __init__(self):
+            table = [ # bits 10..9 down, 8..6 across
+                    [None,  None,   '_d_wsbh',   None,   None,   None,   None,   None],
+                    [None,  None,   None,   None,   None,   None,   None,   None],
+                    ['_d_seb',  None,   None,   None,   None,   None,   None,   None],
+                    ['_d_seh',  None,   None,   None,   None,   None,   None,   None]
+                    ]
+            TableCodec.__init__(self,(8,6),(10,9),table)
+        def _d_wsbh(self,data):
+            if bits.get(data,25,21):
+                return None
+            return MIB('wsbh',None)(
+                        MRO('dest',bits.get(data,15,11)),
+                        MRO('src',bits.get(data,20,16))
+                     )
+
+        def _d_seh(self,data):
+            if bits.get(data,25,21):
+                return None
+            return MIB('seh',None)(
+                        MRO('dest',bits.get(data,15,11)),
+                        MRO('src',bits.get(data,20,16))
+                     )
+        def _d_seb(self,data):
+            if bits.get(data,25,21):
+                return None
+            return MIB('seb',None)(
+                        MRO('dest',bits.get(data,15,11)),
+                        MRO('src',bits.get(data,20,16))
+                     )
+                   
     class SpecialCodec(TableCodec):
         def __init__(self):
             table = [ # bits 5..3 down, 2..0 across
@@ -39,7 +74,20 @@ class MIPSCodec(TableCodec):
                         MIO('shift',bits.get(data,10,6))
                      )
         def _d_movci(self,data):
-            return None  
+            if bits.get(data,10,6) or bits.test(data,17):
+                return None
+            if bits.test(data,16):
+                return MIB('movf',None)(
+                            MRO('src',bits.get(data,25,21)),
+                            MIO('cc',bits.get(data,20,18)),
+                            MRO('dest',bits.get(data,15,11))
+                         )
+            else:
+                return MIB('movt',None)(
+                            MRO('src',bits.get(data,25,21)),
+                            MIO('cc',bits.get(data,20,18)),
+                            MRO('dest',bits.get(data,15,11))
+                         )
         def _d_srl(self,data):
             if bits.get(data,25,22):
                 return None
@@ -326,35 +374,80 @@ class MIPSCodec(TableCodec):
             TableCodec.__init__(self, (18,16), (20,19), table)
                     
         def _d_bltz(self,data):
-            return None      
+            return MIB('bltz',None)(
+                        MRO('predicate',bits.get(data,25,21)),
+                        MIO('target',bits.get(data,15,0))
+                     )
         def _d_bgez(self,data):
-            return None   
+            return MIB('bgez',None)(
+                        MRO('predicate',bits.get(data,25,21)),
+                        MIO('target',bits.get(data,15,0))
+                     )
         def _d_bltzl(self,data):
-            return None      
+            return MIB('bltzl',None)(
+                        MRO('predicate',bits.get(data,25,21)),
+                        MIO('target',bits.get(data,15,0))
+                     )
         def _d_bgezl(self,data):
-            return None               
+            return MIB('bgezl',None)(
+                        MRO('predicate',bits.get(data,25,21)),
+                        MIO('target',bits.get(data,15,0))
+                     )
         def _d_tgei(self,data):
-            return None      
+            return MIB('tgei',None)(
+                        MRO('lhs',bits.get(data,25,21)),
+                        MIO('rhs',bits.get(data,15,0))
+                     )
         def _d_tgeiu(self,data):
-            return None  
+            return MIB('tgeiu',None)(
+                        MRO('lhs',bits.get(data,25,21)),
+                        MIO('rhs',bits.get(data,15,0))
+                     )
         def _d_tlti(self,data):
-            return None       
+            return MIB('tlti',None)(
+                        MRO('lhs',bits.get(data,25,21)),
+                        MIO('rhs',bits.get(data,15,0))
+                     )
         def _d_tltiu(self,data):
-            return None      
+            return MIB('tltiu',None)(
+                        MRO('lhs',bits.get(data,25,21)),
+                        MIO('rhs',bits.get(data,15,0))
+                     )
         def _d_teqi(self,data):
-            return None      
+            return MIB('teqi',None)(
+                        MRO('lhs',bits.get(data,25,21)),
+                        MIO('rhs',bits.get(data,15,0))
+                     )
         def _d_tnei(self,data):
-            return None   
+            return MIB('tnei',None)(
+                        MRO('lhs',bits.get(data,25,21)),
+                        MIO('rhs',bits.get(data,15,0))
+                     )
         def _d_bltzal(self,data):
-            return None    
+            return MIB('bltzal',None)(
+                        MRO('predicate',bits.get(data,25,21)),
+                        MIO('target',bits.get(data,15,0))
+                     )
         def _d_bgezal(self,data):
-            return None 
+            return MIB('bgezal',None)(
+                        MRO('predicate',bits.get(data,25,21)),
+                        MIO('target',bits.get(data,15,0))
+                     )
         def _d_btlzall(self,data):
-            return None    
+            return MIB('bltzall',None)(
+                        MRO('predicate',bits.get(data,25,21)),
+                        MIO('target',bits.get(data,15,0))
+                     )
         def _d_bgezall(self,data):
-            return None             
+            return MIB('bgezall',None)(
+                        MRO('predicate',bits.get(data,25,21)),
+                        MIO('target',bits.get(data,15,0))
+                     )
         def _d_synci(self,data):
-            return None
+            return MIB('synci',None)(
+                        MIO('base',bits.get(data,25,21)),
+                        MIO('offset',bits.get(data,15,0))
+                     )
     class Special2Codec(TableCodec):
         def __init__(self):
             table = [ # bits 5..3 down, 2..0 across
@@ -370,21 +463,61 @@ class MIPSCodec(TableCodec):
             TableCodec.__init__(self, (2,0), (5,3), table)
                     
         def _d_madd(self,data):
-            return None  
+            if bits.get(data,15,6):
+                return None
+            return MIB('madd',None)(
+                        MRO('srca',bits.get(data,25,21)),
+                        MRO('srcb',bits.get(data,20,16))
+                     )
         def _d_maddu(self,data):
-            return None  
+            if bits.get(data,15,6):
+                return None
+            return MIB('maddu',None)(
+                        MRO('srca',bits.get(data,25,21)),
+                        MRO('srcb',bits.get(data,20,16))
+                     )
         def _d_mul(self,data):
-            return None       
+            if bits.get(data,10,6):
+                return None
+            return MIB('mul',None)(
+                        MRO('dest',bits.get(data,25,21)),
+                        MRO('srca',bits.get(data,20,16)),
+                        MRO('srcb',bits.get(data,15,11))
+                     )
         def _d_msub(self,data):
-            return None   
+            if bits.get(data,15,6):
+                return None
+            return MIB('msub',None)(
+                        MRO('srca',bits.get(data,25,21)),
+                        MRO('srcb',bits.get(data,20,16))
+                     )
         def _d_msubu(self,data):
-            return None     
+            if bits.get(data,15,6):
+                return None
+            return MIB('msubu',None)(
+                        MRO('srca',bits.get(data,25,21)),
+                        MRO('srcb',bits.get(data,20,16))
+                     )
         def _d_clz(self,data):
-            return None   
+            if bits.get(data,10,6):
+                return None
+            return MIB('clz',None)(
+                        MRO('srca',bits.get(data,25,21)),
+                        MRO('srca_',bits.get(data,20,16)), #according to the docs, srca and srca_ must be the same
+                        MRO('dest',bits.get(data,15,11))
+                     )
         def _d_clo(self,data):
-            return None                   
+            if bits.get(data,10,6):
+                return None
+            return MIB('clo',None)(
+                        MRO('srca',bits.get(data,25,21)),
+                        MRO('srca_',bits.get(data,20,16)), #according to the docs, srca and srca_ must be the same
+                        MRO('dest',bits.get(data,15,11))
+                     )
         def _d_sdbbp(self,data):
-            return None
+            return MIB('sdbbp',None)(
+                        MIO('code',bits.get(data,25,6))
+                     )
     class Special3Codec(TableCodec):
         def __init__(self):
             table = [ # bits 5..3 down, 2..0 across
@@ -398,14 +531,32 @@ class MIPSCodec(TableCodec):
                 [None,  None,   None,   '_d_rdhwr',  None,   None,   None,   None]
                 ]
             TableCodec.__init__(self, (2,0), (5,3), table)
+            self.class_decoders = { 
+                    'bshfl' :MIPSCodec.BSHFLCodec(),
+                    }
         def _d_ext(self,data):
-            return None
+            return MIB('ext',None)(
+                        MRO('src',bits.get(data,25,21)),
+                        MRO('dest',bits.get(data,20,16)), 
+                        MIO('size',bits.get(data,15,11)),
+                        MIO('pos',bits.get(data,10,6))
+                     )
         def _d_ins(self,data):
-            return None
+            return MIB('ins',None)(
+                        MRO('src',bits.get(data,25,21)),
+                        MRO('dest',bits.get(data,20,16)), 
+                        MIO('size',bits.get(data,15,11)),
+                        MIO('pos',bits.get(data,10,6))
+                     )
         def _d_bshfl(self,data):
-            return None
+            return self.class_decoders['bshfl'].decode(data)
         def _d_rdhwr(self,data):
-            return None
+            if bits.get(data,10,6) or bits.get(data,25,21):
+                return None
+            return MIB('rdhwr',None)(
+                        MRO('dest',bits.get(data,20,16)), 
+                        MIO('num',bits.get(data,15,11))
+                     )
     def __init__(self):
         table = [ #bits 31..29 down; 28..26 across
                 ['_d_special', '_d_regimm',   '_d_j',    '_d_jal',  '_d_beq',      '_d_bne',  '_d_blez', '_d_bgtz'],
@@ -430,33 +581,88 @@ class MIPSCodec(TableCodec):
     def _d_regimm(self,data):
         return self.class_decoders['regimm'].decode(data)
     def _d_j(self,data):
-        return None
+        return MIB('j',None)(
+                    MIO('target',bits.get(data,25,0))
+                 )
     def _d_jal(self,data):
-        return None
+        return MIB('jal',None)(
+                    MIO('target',bits.get(data,25,0))
+                 )
     def _d_beq(self,data):
-        return None
+        return MIB('beq',None)(
+                    MRO('lhs',bits.get(data,25,21)),
+                    MRO('rhs',bits.get(data,20,16)),
+                    MIO('target',bits.get(data,15,0))
+                 )
     def _d_bne(self,data):
-        return None
+        return MIB('bne',None)(
+                    MRO('lhs',bits.get(data,25,21)),
+                    MRO('rhs',bits.get(data,20,16)),
+                    MIO('target',bits.get(data,15,0))
+                 )
     def _d_blez(self,data):
-        return None
+        if bits.get(data,20,16):
+            return None
+        return MIB('blez',None)(
+                    MRO('predicate',bits.get(data,25,21)),
+                    MIO('target',bits.get(data,15,0))
+                 )
     def _d_bgtz(self,data):
-        return None
+        if bits.get(data,20,16):
+            return None
+        return MIB('bgtz',None)(
+                    MRO('predicate',bits.get(data,25,21)),
+                    MIO('target',bits.get(data,15,0))
+                 )
     def _d_addi(self,data):
-        return None
+        return MIB('addi',None)(
+                    MRO('src',bits.get(data,25,21)),
+                    MRO('dest',bits.get(data,20,16)),
+                    MIO('addend',bits.get(data,15,0))
+                 )
     def _d_addiu(self,data):
-        return None
+        return MIB('addiu',None)(
+                    MRO('src',bits.get(data,25,21)),
+                    MRO('dest',bits.get(data,20,16)),
+                    MIO('addend',bits.get(data,15,0))
+                 )
     def _d_slti(self,data):
-        return None
+        return MIB('slti',None)(
+                    MRO('lhs',bits.get(data,25,21)),
+                    MRO('dest',bits.get(data,20,16)),
+                    MIO('rhs',bits.get(data,15,0))
+                 )
     def _d_sltiu(self,data):
-        return None
+        return MIB('sltiu',None)(
+                    MRO('lhs',bits.get(data,25,21)),
+                    MRO('dest',bits.get(data,20,16)),
+                    MIO('rhs',bits.get(data,15,0))
+                 )
     def _d_andi(self,data):
-        return None
+        return MIB('andi',None)(
+                    MRO('lhs',bits.get(data,25,21)),
+                    MRO('dest',bits.get(data,20,16)),
+                    MIO('rhs',bits.get(data,15,0))
+                 )
     def _d_ori(self,data):
-        return None
+        return MIB('ori',None)(
+                    MRO('lhs',bits.get(data,25,21)),
+                    MRO('dest',bits.get(data,20,16)),
+                    MIO('rhs',bits.get(data,15,0))
+                 )
     def _d_xori(self,data):
-        return None
+        return MIB('xori',None)(
+                    MRO('lhs',bits.get(data,25,21)),
+                    MRO('dest',bits.get(data,20,16)),
+                    MIO('rhs',bits.get(data,15,0))
+                 )
     def _d_lui(self,data):
-        return None
+        if bits.get(data,25,21):
+            return None
+        return MIB('lui',None)(
+                    MRO('dest',bits.get(data,20,16)),
+                    MIO('imm',bits.get(data,15,0))
+                 )
     def _d_cop0(self,data):
         return None
     def _d_cop1(self,data):
@@ -466,13 +672,31 @@ class MIPSCodec(TableCodec):
     def _d_cop1x(self,data):
         return None
     def _d_beql(self,data):
-        return None
+        return MIB('beql',None)(
+                    MRO('lhs',bits.get(data,25,21)),
+                    MRO('rhs',bits.get(data,20,16)),
+                    MIO('target',bits.get(data,15,0))
+                 )
     def _d_bnel(self,data):
-        return None
+        return MIB('bnel',None)(
+                    MRO('lhs',bits.get(data,25,21)),
+                    MRO('rhs',bits.get(data,20,16)),
+                    MIO('target',bits.get(data,15,0))
+                 )
     def _d_blezl(self,data):
-        return None
+        if bits.get(data,20,16):
+            return None
+        return MIB('blezl',None)(
+                    MRO('predicate',bits.get(data,25,21)),
+                    MIO('target',bits.get(data,15,0))
+                 )
     def _d_bgtzl(self,data):
-        return None
+        if bits.get(data,20,16):
+            return None
+        return MIB('blgtzl',None)(
+                    MRO('predicate',bits.get(data,25,21)),
+                    MIO('target',bits.get(data,15,0))
+                 )
     def _d_special2(self,data):
         return self.class_decoders['special2'].decode(data)
     def _d_jalx(self,data):
@@ -480,65 +704,163 @@ class MIPSCodec(TableCodec):
     def _d_special3(self,data):
         return self.class_decoders['special3'].decode(data)
     def _d_lb(self,data):
-        return None
+        return MIB('lb',None)(
+                    MIO('base',bits.get(data,25,21)),
+                    MRO('dest',bits.get(data,20,16)),
+                    MIO('offset',bits.get(data,15,0))
+                 )
     def _d_lh(self,data):
-        return None
+        return MIB('lh',None)(
+                    MIO('base',bits.get(data,25,21)),
+                    MRO('dest',bits.get(data,20,16)),
+                    MIO('offset',bits.get(data,15,0))
+                 )
     def _d_lwl(self,data):
-        return None
+        return MIB('lwl',None)(
+                    MIO('base',bits.get(data,25,21)),
+                    MRO('dest',bits.get(data,20,16)),
+                    MIO('offset',bits.get(data,15,0))
+                 )
     def _d_lw(self,data):
-        return None
+        return MIB('lw',None)(
+                    MIO('base',bits.get(data,25,21)),
+                    MRO('dest',bits.get(data,20,16)),
+                    MIO('offset',bits.get(data,15,0))
+                 )
     def _d_lbu(self,data):
-        return None
+        return MIB('lbu',None)(
+                    MIO('base',bits.get(data,25,21)),
+                    MRO('dest',bits.get(data,20,16)),
+                    MIO('offset',bits.get(data,15,0))
+                 )
     def _d_lhu(self,data):
-        return None
+        return MIB('lhu',None)(
+                    MIO('base',bits.get(data,25,21)),
+                    MRO('dest',bits.get(data,20,16)),
+                    MIO('offset',bits.get(data,15,0))
+                 )
     def _d_lwr(self,data):
-        return None
+        return MIB('lwr',None)(
+                    MIO('base',bits.get(data,25,21)),
+                    MRO('dest',bits.get(data,20,16)),
+                    MIO('offset',bits.get(data,15,0))
+                 )
     def _d_sb(self,data):
-        return None
+        return MIB('sb',None)(
+                    MIO('base',bits.get(data,25,21)),
+                    MRO('src',bits.get(data,20,16)),
+                    MIO('offset',bits.get(data,15,0))
+                 )
     def _d_sh(self,data):
-        return None
+        return MIB('sh',None)(
+                    MIO('base',bits.get(data,25,21)),
+                    MRO('src',bits.get(data,20,16)),
+                    MIO('offset',bits.get(data,15,0))
+                 )
     def _d_swl(self,data):
-        return None
+        return MIB('swl',None)(
+                    MIO('base',bits.get(data,25,21)),
+                    MRO('src',bits.get(data,20,16)),
+                    MIO('offset',bits.get(data,15,0))
+                 )
     def _d_sw(self,data):
-        return None
+        return MIB('sw',None)(
+                    MIO('base',bits.get(data,25,21)),
+                    MRO('src',bits.get(data,20,16)),
+                    MIO('offset',bits.get(data,15,0))
+                 )
     def _d_swr(self,data):
-        return None
+        return MIB('swr',None)(
+                    MIO('base',bits.get(data,25,21)),
+                    MRO('src',bits.get(data,20,16)),
+                    MIO('offset',bits.get(data,15,0))
+                 )
     def _d_cache(self,data):
-        return None
+        return MIB('cache',None)(
+                    MIO('base',bits.get(data,25,21)),
+                    MIO('op',bits.get(data,20,16)),
+                    MIO('offset',bits.get(data,15,0))
+                 )
     def _d_ll(self,data):
-        return None
+        return MIB('ll',None)(
+                    MIO('base',bits.get(data,25,21)),
+                    MRO('dest',bits.get(data,20,16)),
+                    MIO('offset',bits.get(data,15,0))
+                 )
     def _d_lwc1(self,data):
-        return None
+        return MIB('lwc1',None)(
+                    MIO('base',bits.get(data,25,21)),
+                    MFRO('dest',bits.get(data,20,16)),
+                    MIO('offset',bits.get(data,15,0))
+                 )
     def _d_lwc2(self,data):
-        return None
+        return MIB('lwc2',None)(
+                    MIO('base',bits.get(data,25,21)),
+                    MIO('dest',bits.get(data,20,16)),
+                    MIO('offset',bits.get(data,15,0))
+                 )
     def _d_pref(self,data):
-        return None
+        return MIB('pref',None)(
+                    MIO('base',bits.get(data,25,21)),
+                    MIO('hint',bits.get(data,20,16)),
+                    MIO('offset',bits.get(data,15,0))
+                 )
     def _d_ldc1(self,data):
-        return None
+        return MIB('ldc1',None)(
+                    MIO('base',bits.get(data,25,21)),
+                    MFRO('dest',bits.get(data,20,16)),
+                    MIO('offset',bits.get(data,15,0))
+                 )
     def _d_ldc2(self,data):
-        return None
+        return MIB('ldc2',None)(
+                    MIO('base',bits.get(data,25,21)),
+                    MIO('dest',bits.get(data,20,16)),
+                    MIO('offset',bits.get(data,15,0))
+                 )
     def _d_sc(self,data):
-        return None
+        return MIB('sc',None)(
+                    MIO('base',bits.get(data,25,21)),
+                    MRO('src',bits.get(data,20,16)),
+                    MIO('offset',bits.get(data,15,0))
+                 )
     def _d_swc1(self,data):
-        return None
+        return MIB('swc1',None)(
+                    MIO('base',bits.get(data,25,21)),
+                    MFRO('src',bits.get(data,20,16)),
+                    MIO('offset',bits.get(data,15,0))
+                 )
     def _d_swc2(self,data):
-        return None
+        return MIB('swc2',None)(
+                    MIO('base',bits.get(data,25,21)),
+                    MIO('src',bits.get(data,20,16)),
+                    MIO('offset',bits.get(data,15,0))
+                 )
     def _d_sdc1(self,data):
-        return None
+        return MIB('sdc1',None)(
+                    MIO('base',bits.get(data,25,21)),
+                    MFRO('src',bits.get(data,20,16)),
+                    MIO('offset',bits.get(data,15,0))
+                 )
     def _d_sdc2(self,data):
-        return None
+        return MIB('sdc2',None)(
+                    MIO('base',bits.get(data,25,21)),
+                    MIO('src',bits.get(data,20,16)),
+                    MIO('offset',bits.get(data,15,0))
+                 )
 
 
 class MIPSMachine(Machine):
     shortname = "MIPS"
     longname = "MIPS"
 	
-    def __init__(self,datastore):
+    def __init__(self,datastore,littleendian=0):
         self.datastore = datastore
         self.codec = MIPSCodec()
+        self.littleendian = littleendian
 
     def disassemble(self, id):
         data = self.datastore.readBytes(id,4)
+        data = struct.unpack(self.littleendian and ">I" or "<I",data)
         return self.codec.decode(data)
 
 machines = [MIPSMachine]
