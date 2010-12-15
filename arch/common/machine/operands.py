@@ -16,3 +16,8 @@ class MachineImmediateOperand(MachineOperand):
         super(MachineImmediateOperand,self).__init__(name)
         self.value = value
         self.width = width
+class MachineMemoryOperand(MachineOperand):
+    def __init__(self,name,base,offset):
+        super(MachineMemoryOperand,self).__init__(name)
+        self.base = base
+        self.offset = offset
