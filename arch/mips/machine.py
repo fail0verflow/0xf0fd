@@ -7,6 +7,7 @@ MRO = MachineRegisterOperand
 #TODO: implement a real MachineFloatingpointRegisterOperand
 MFRO = MachineRegisterOperand
 MIO = MachineImmediateOperand
+MMO = MachineMemoryOperand
 
 class MIPSMachineInstruction(MachineInstruction):
     def __init__(self, *args):
@@ -445,8 +446,10 @@ class MIPSCodec(TableCodec):
                      )
         def _d_synci(self,data):
             return MIB('synci',None)(
-                        MIO('base',bits.get(data,25,21)),
-                        MIO('offset',bits.get(data,15,0))
+                        MMO(
+                            MRO('base',bits.get(data,25,21)),
+                            MIO('offset',bits.get(data,15,0))
+                        )
                      )
     class Special2Codec(TableCodec):
         def __init__(self):
@@ -705,147 +708,195 @@ class MIPSCodec(TableCodec):
         return self.class_decoders['special3'].decode(data)
     def _d_lb(self,data):
         return MIB('lb',None)(
-                    MIO('base',bits.get(data,25,21)),
                     MRO('dest',bits.get(data,20,16)),
-                    MIO('offset',bits.get(data,15,0))
+                    MMO('src',
+                        MRO('base',bits.get(data,25,21)),
+                        MIO('offset',bits.get(data,15,0))
+                    )
                  )
     def _d_lh(self,data):
         return MIB('lh',None)(
-                    MIO('base',bits.get(data,25,21)),
                     MRO('dest',bits.get(data,20,16)),
-                    MIO('offset',bits.get(data,15,0))
+                    MMO('src',
+                        MRO('base',bits.get(data,25,21)),
+                        MIO('offset',bits.get(data,15,0))
+                    )
                  )
     def _d_lwl(self,data):
         return MIB('lwl',None)(
-                    MIO('base',bits.get(data,25,21)),
                     MRO('dest',bits.get(data,20,16)),
-                    MIO('offset',bits.get(data,15,0))
+                    MMO('src',
+                        MRO('base',bits.get(data,25,21)),
+                        MIO('offset',bits.get(data,15,0))
+                    )
                  )
     def _d_lw(self,data):
         return MIB('lw',None)(
-                    MIO('base',bits.get(data,25,21)),
                     MRO('dest',bits.get(data,20,16)),
-                    MIO('offset',bits.get(data,15,0))
+                    MMO('src',
+                        MRO('base',bits.get(data,25,21)),
+                        MIO('offset',bits.get(data,15,0))
+                    )
                  )
     def _d_lbu(self,data):
         return MIB('lbu',None)(
-                    MIO('base',bits.get(data,25,21)),
                     MRO('dest',bits.get(data,20,16)),
-                    MIO('offset',bits.get(data,15,0))
+                    MMO('src',
+                        MRO('base',bits.get(data,25,21)),
+                        MIO('offset',bits.get(data,15,0))
+                    )
                  )
     def _d_lhu(self,data):
         return MIB('lhu',None)(
-                    MIO('base',bits.get(data,25,21)),
                     MRO('dest',bits.get(data,20,16)),
-                    MIO('offset',bits.get(data,15,0))
+                    MMO('src',
+                        MRO('base',bits.get(data,25,21)),
+                        MIO('offset',bits.get(data,15,0))
+                    )
                  )
     def _d_lwr(self,data):
         return MIB('lwr',None)(
-                    MIO('base',bits.get(data,25,21)),
                     MRO('dest',bits.get(data,20,16)),
-                    MIO('offset',bits.get(data,15,0))
+                    MMO('src',
+                        MRO('base',bits.get(data,25,21)),
+                        MIO('offset',bits.get(data,15,0))
+                    )
                  )
     def _d_sb(self,data):
         return MIB('sb',None)(
-                    MIO('base',bits.get(data,25,21)),
                     MRO('src',bits.get(data,20,16)),
-                    MIO('offset',bits.get(data,15,0))
+                    MMO('dest',
+                        MRO('base',bits.get(data,25,21)),
+                        MIO('offset',bits.get(data,15,0))
+                    )
                  )
     def _d_sh(self,data):
         return MIB('sh',None)(
-                    MIO('base',bits.get(data,25,21)),
                     MRO('src',bits.get(data,20,16)),
-                    MIO('offset',bits.get(data,15,0))
+                    MMO('dest',
+                        MRO('base',bits.get(data,25,21)),
+                        MIO('offset',bits.get(data,15,0))
+                    )
                  )
     def _d_swl(self,data):
         return MIB('swl',None)(
-                    MIO('base',bits.get(data,25,21)),
                     MRO('src',bits.get(data,20,16)),
-                    MIO('offset',bits.get(data,15,0))
+                    MMO('dest',
+                        MRO('base',bits.get(data,25,21)),
+                        MIO('offset',bits.get(data,15,0))
+                    )
                  )
     def _d_sw(self,data):
         return MIB('sw',None)(
-                    MIO('base',bits.get(data,25,21)),
                     MRO('src',bits.get(data,20,16)),
-                    MIO('offset',bits.get(data,15,0))
+                    MMO('dest',
+                        MRO('base',bits.get(data,25,21)),
+                        MIO('offset',bits.get(data,15,0))
+                    )
                  )
     def _d_swr(self,data):
         return MIB('swr',None)(
-                    MIO('base',bits.get(data,25,21)),
                     MRO('src',bits.get(data,20,16)),
-                    MIO('offset',bits.get(data,15,0))
+                    MMO('dest',
+                        MRO('base',bits.get(data,25,21)),
+                        MIO('offset',bits.get(data,15,0))
+                    )
                  )
     def _d_cache(self,data):
         return MIB('cache',None)(
-                    MIO('base',bits.get(data,25,21)),
                     MIO('op',bits.get(data,20,16)),
-                    MIO('offset',bits.get(data,15,0))
+                    MMO('target',
+                        MRO('base',bits.get(data,25,21)),
+                        MIO('offset',bits.get(data,15,0))
+                    )
                  )
     def _d_ll(self,data):
         return MIB('ll',None)(
-                    MIO('base',bits.get(data,25,21)),
                     MRO('dest',bits.get(data,20,16)),
-                    MIO('offset',bits.get(data,15,0))
+                    MMO('src',
+                        MRO('base',bits.get(data,25,21)),
+                        MIO('offset',bits.get(data,15,0))
+                    )
                  )
     def _d_lwc1(self,data):
         return MIB('lwc1',None)(
-                    MIO('base',bits.get(data,25,21)),
                     MFRO('dest',bits.get(data,20,16)),
-                    MIO('offset',bits.get(data,15,0))
+                    MMO('src',
+                        MRO('base',bits.get(data,25,21)),
+                        MIO('offset',bits.get(data,15,0))
+                    )
                  )
     def _d_lwc2(self,data):
         return MIB('lwc2',None)(
-                    MIO('base',bits.get(data,25,21)),
                     MIO('dest',bits.get(data,20,16)),
-                    MIO('offset',bits.get(data,15,0))
+                    MMO('src',
+                        MRO('base',bits.get(data,25,21)),
+                        MIO('offset',bits.get(data,15,0))
+                    )
                  )
     def _d_pref(self,data):
         return MIB('pref',None)(
-                    MIO('base',bits.get(data,25,21)),
                     MIO('hint',bits.get(data,20,16)),
-                    MIO('offset',bits.get(data,15,0))
+                    MMO('dest',
+                        MRO('base',bits.get(data,25,21)),
+                        MIO('offset',bits.get(data,15,0))
+                    )
                  )
     def _d_ldc1(self,data):
         return MIB('ldc1',None)(
-                    MIO('base',bits.get(data,25,21)),
                     MFRO('dest',bits.get(data,20,16)),
-                    MIO('offset',bits.get(data,15,0))
+                    MMO('src',
+                        MRO('base',bits.get(data,25,21)),
+                        MIO('offset',bits.get(data,15,0))
+                    )
                  )
     def _d_ldc2(self,data):
         return MIB('ldc2',None)(
-                    MIO('base',bits.get(data,25,21)),
                     MIO('dest',bits.get(data,20,16)),
-                    MIO('offset',bits.get(data,15,0))
+                    MMO('src',
+                        MRO('base',bits.get(data,25,21)),
+                        MIO('offset',bits.get(data,15,0))
+                    )
                  )
     def _d_sc(self,data):
         return MIB('sc',None)(
-                    MIO('base',bits.get(data,25,21)),
                     MRO('src',bits.get(data,20,16)),
-                    MIO('offset',bits.get(data,15,0))
+                    MMO('dest',
+                        MRO('base',bits.get(data,25,21)),
+                        MIO('offset',bits.get(data,15,0))
+                    )
                  )
     def _d_swc1(self,data):
         return MIB('swc1',None)(
-                    MIO('base',bits.get(data,25,21)),
                     MFRO('src',bits.get(data,20,16)),
-                    MIO('offset',bits.get(data,15,0))
+                    MMO('dest',
+                        MRO('base',bits.get(data,25,21)),
+                        MIO('offset',bits.get(data,15,0))
+                    )
                  )
     def _d_swc2(self,data):
         return MIB('swc2',None)(
-                    MIO('base',bits.get(data,25,21)),
                     MIO('src',bits.get(data,20,16)),
-                    MIO('offset',bits.get(data,15,0))
+                    MMO('dest',
+                        MRO('base',bits.get(data,25,21)),
+                        MIO('offset',bits.get(data,15,0))
+                    )
                  )
     def _d_sdc1(self,data):
         return MIB('sdc1',None)(
-                    MIO('base',bits.get(data,25,21)),
                     MFRO('src',bits.get(data,20,16)),
-                    MIO('offset',bits.get(data,15,0))
+                    MMO('dest',
+                        MRO('base',bits.get(data,25,21)),
+                        MIO('offset',bits.get(data,15,0))
+                    )
                  )
     def _d_sdc2(self,data):
         return MIB('sdc2',None)(
-                    MIO('base',bits.get(data,25,21)),
                     MIO('src',bits.get(data,20,16)),
-                    MIO('offset',bits.get(data,15,0))
+                    MMO('dest',
+                        MRO('base',bits.get(data,25,21)),
+                        MIO('offset',bits.get(data,15,0))
+                    )
                  )
 
 
