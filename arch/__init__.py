@@ -63,8 +63,7 @@ def loadMachineModules():
                 print "Error - could not find machine list for machine %s" % arch_modname
                 raise
         except:
-            print "Error, could not import machine %s" % arch_modname
-            raise
+            print "Error, could not import machine %s, skipping" % arch_modname
 
     return machine_list
 

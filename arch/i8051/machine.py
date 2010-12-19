@@ -6,9 +6,10 @@ import opcode_8051
 
 
 class i8051MachineInstruction(MachineInstruction):
-    def __init__(self, length=-1, *args):
+    def __init__(self, length, dests, *args):
         self.operands = args
         self.__length = length
+        self.__dests = dests
 
     def __repr__(self):
         res = self.mnemonic + " "
@@ -18,6 +19,9 @@ class i8051MachineInstruction(MachineInstruction):
 
     def length(self):
         return self.__length
+
+    def dests(self):
+        return self.__dests
 
 MIB = get_MachineInstructionBuilder('arch.mips.machine',i8051MachineInstruction)
 
@@ -29,9 +33,10 @@ def i8051Adaptor(id, bytes):
 
     disasm = rv["disasm"]
     length = rv["length"]
+    dests = rv["dests"]
 
     return MIB(disasm.opcode, None)(
-        length, *disasm.operands)
+        length,dests, *disasm.operands)
 
 
 class i8051Machine(object):
