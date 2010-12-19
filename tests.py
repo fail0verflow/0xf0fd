@@ -53,6 +53,21 @@ class basicSectionTestCase(unittest.TestCase):
         ds.addSegment(seg)
         
         undefine(ds, 0)
+   
+    # Verify that the layoutChanged signal is emitted
+    def testAddLayoutChanged(self):
+        fired = [False]
+        def mockChangeHDLR():
+            fired[0] = True
+
+        ds = DataStore(":memory:")
+        ds.layoutChanged.connect(mockChangeHDLR)
+
+        seg = Segment([0,1,2,3,4,5,6,7], 0x0)
+        ds.addSegment(seg)
+        
+        self.assertEqual(fired[0], True)
+
         
                     
 if __name__ == '__main__':

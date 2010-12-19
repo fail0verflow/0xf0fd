@@ -1,8 +1,13 @@
+from idis.fsignal import FSignal
+
+
 class SymbolList(object):
     """ SymbolList provides a view onto the list of symbols in the database"""
     def __init__(self, connection, table):
         self.conn = connection
-        
+        self.symbolsChanged = FSignal()
+
+
     def __len__(self):
         return self.conn.execute('''SELECT COUNT(*) FROM symbols''' % table).fetchall()[0]
 
@@ -22,6 +27,7 @@ class SymbolList(object):
             self.conn.execute('''INSERT INTO symbols (addr, name) VALUES (?,?)''',
                 (addr,text))
     
+        self.symbolsChanged.emit()
 
     def listInterface(self, order, order_dir, index):
         """ listInterface provides an ordered view onto the symbol list.

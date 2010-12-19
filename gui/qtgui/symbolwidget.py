@@ -7,6 +7,12 @@ class SymbolModel(QtCore.QAbstractItemModel):
         self.order_dir = 'ASC'
         self.order = 'addr'
 
+        self.datastore.symbols.symbolsChanged.connect(self.symbolsChanged)
+
+    def symbolsChanged(self):
+        self.emit(QtCore.SIGNAL("layoutAboutToBeChanged()"))
+        self.emit(QtCore.SIGNAL("layoutChanged()"))
+        
     def sort(self, col_num, order):
         assert col_num in [0,1]
         self.emit(QtCore.SIGNAL("layoutAboutToBeChanged()"))

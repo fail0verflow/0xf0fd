@@ -7,6 +7,7 @@ from arch.shared_mem_types import *
 from properties import *
 from commentlist import *
 from symbollist import *
+from idis.fsignal import FSignal
 
 class DataStore:
     def __init__(self, filename):
@@ -36,7 +37,7 @@ class DataStore:
 
         self.properties = Properties(self.conn)
 
-
+        self.layoutChanged = FSignal()
 
         self.db_version = self.properties.get("f0fd.db_version", 1)
 
@@ -60,6 +61,8 @@ class DataStore:
         dbstr = sqlite3.Binary(zlib.compress(dumps(segment)))
         self.c.execute('''INSERT INTO segments (base_addr, obj) VALUES (?,?)''',
               (segment.base_addr,dbstr))
+
+        self.layoutChanged()
 
     def readBytes(self, addr, length = 1):
         for i in self.segments_cache:

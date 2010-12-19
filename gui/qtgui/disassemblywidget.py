@@ -33,13 +33,19 @@ class DisassemblyWidget(QtGui.QAbstractScrollArea):
         self.setViewport(self.view)
         self.ch = CommandHandler(gui, self.ds, self)
         
+        # Setup scrollbars
+        self.reconfigureScrollBars()
+        self.ds.layoutChanged.connect(self.reconfigureScrollBars)
+        self.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOn)
+
+        # Connect scrolling to update the view
+        QtCore.QObject.connect(self.vscroll, QtCore.SIGNAL('valueChanged(int)'), self.scrollEvent)
+
+
+    def reconfigureScrollBars(self):
         self.vscroll = self.verticalScrollBar()
         self.vscroll.setMinimum(0)
         self.vscroll.setMaximum(self.sm.getLineCount())
-
-
-        QtCore.QObject.connect(self.vscroll, QtCore.SIGNAL('valueChanged(int)'), self.scrollEvent)
-        self.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOn)
 
     def keyPressEvent(self, evt):
         reserved_keys = []
