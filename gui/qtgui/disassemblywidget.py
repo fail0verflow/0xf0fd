@@ -22,7 +22,7 @@ class SegmentLineMapper(object):
         raise ValueError, "Address could not be mapped"
         
 class DisassemblyWidget(QtGui.QAbstractScrollArea):
-    def __init__(self, parent, ds):
+    def __init__(self, parent, gui, ds):
         super(DisassemblyWidget, self).__init__(parent)
         self.window_up = parent
 
@@ -31,7 +31,7 @@ class DisassemblyWidget(QtGui.QAbstractScrollArea):
         self.view = DisassemblyGraphicsView(self.ds, self.sm)
 
         self.setViewport(self.view)
-        self.ch = CommandHandler(self.ds, self)
+        self.ch = CommandHandler(gui, self.ds, self)
         
         self.vscroll = self.verticalScrollBar()
         self.vscroll.setMinimum(0)
@@ -54,7 +54,7 @@ class DisassemblyWidget(QtGui.QAbstractScrollArea):
             
             elif evt.k == QtCore.Qt.Key_Up:
                 selected_addr = self.view.getSelAddr()
-                next_addr = self.ds.findBeforeAddress(selected_addr - 1)
+                next_addr = self.ds.findStartForAddress(selected_addr - 1)
                 
                 if next_addr == None:
                     return
@@ -83,9 +83,8 @@ class DisassemblyWidget(QtGui.QAbstractScrollArea):
         self.view.setSelAddr(self.view.getClickAddr(evt.y()))
         
     def scrollEvent(self, value):
-        seek_addr = self.ds.findBeforeAddress(value)
+        seek_addr = self.ds.findStartForAddress(value)
         assert seek_addr != None
-
         self.view.setTopAddr(seek_addr)
         
     def paintEvent(self, event):

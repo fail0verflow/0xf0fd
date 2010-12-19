@@ -1,4 +1,3 @@
-from dbtypes import *
 from arch import getDecoder
 
 
@@ -76,36 +75,75 @@ class Symbol(object):
     def __str__(self):
         return self.name
 
+
+# Temporary mock operand until the type system gets sorted out
+class DefaultMock(object):
+    """ Mock object created when there is nothing in the DB about a given address """
+    class OperandMock(object):
+        def __init__(self, value):
+            self.value = value
+
+        def render(self, ds):
+            return "0x%02x" % self.value, 0
+
+    class DisasmMock(object):
+        def __init__(self, value):
+            self.mnemonic = ".db"
+            self.operands = [DefaultMock.OperandMock(value)]
+
+    def __init__(self, ds, addr):
+        self.value = ds.readBytes(addr, 1)[0]
+        self.disasm = DefaultMock.DisasmMock(self.value)
+        self.typename = "default"
+        self.typeclass = "default"
+        self.addr = addr
+        self.label = None
+        self.cdict = {}
+        self.length = 1
+        self.comment = ""
+
+
+# Information about a memory location
 class MemoryInfo(object):
-
     @staticmethod
-    def createFromDecoding(decoding):
-        if __debug__:
-            required_nouns = ["addr", "length", "disasm", "typeclass", "typename"]
-            
-            if decoding["typeclass"] == "code":
-                required_nouns += ["dests"]
-                
-            for i in required_nouns:
-                assert i in decoding, "No noun %s in supplied arg type: %s" %(i, type(decoding))
+    def createForTypeName(ds, addr, typename):
+        """ Create an MemoryInfo object, given only the desired typename"""        
+        decoder = getDecoder(ds, typename)
+        decoded = decoder.disassemble(addr, saved_params=None)
+        m = MemoryInfo("key!!",
+                ds = ds,
+                addr = addr,
+                length = decoded.length(),
+                typeclass = decoder.typeclass,
+                typename = decoder.shortname,
+                disasm = decoded,
+                persist_attribs = None)
 
-        m = MemoryInfo( "key",
-                        addr=decoding["addr"],
-                        length=decoding["length"],
-                        typeclass=decoding["typeclass"],
-                        typename=decoding["typename"],
-                        disasm=decoding["disasm"])
-                        
-        m.cdict["decoding"] = decoding
-        
-        try:
-            m.persist_attribs["saved_params"] = decoding["saved_params"]
-        except KeyError:
-            pass
-            
         return m
+
+    @staticmethod 
+    def createFromParams(ds, addr, length, typename, typeclass, persist_attribs):
+        try:
+            saved_params = persist_attribs["saved_params"]
+        except KeyError:
+            saved_params = {}
         
+        decoder = getDecoder(ds, typename)
         
+        decoded = decoder.disassemble(addr, saved_params=saved_params)
+        assert decoded.length() == length
+
+        m = MemoryInfo("key!!",
+                ds = ds,
+                addr = addr,
+                length = decoded.length(),
+                typeclass = decoder.typeclass,
+                typename = decoder.shortname,
+                disasm = decoded,
+                persist_attribs = persist_attribs)
+
+        return m
+
     def __getstate__(self):
         dont_save = ["xrefs", "ds_link"]
         return dict([i for i in self.__dict__.items() if i[0] not in dont_save])
@@ -162,7 +200,10 @@ class MemoryInfo(object):
     def __get_cdict(self): return self.__cdict
     cdict = property(__get_cdict)
     
-    def __init__(self, ff, addr, length, typeclass, typename, disasm = None, ds = None, persist_attribs=None):
+    def __init__(self, ff, addr, length, typeclass, typename, disasm, ds, persist_attribs):
+        assert ff == "key!!" # Make sure all incorrect instantiations are gone
+
+        self.ds = ds
         # legacy
         self.ds_link = None
 
@@ -173,19 +214,7 @@ class MemoryInfo(object):
             self.persist_attribs = proxy_dict(self.push_changes)
         else:
             self.persist_attribs = persist_attribs
-            
-        if not disasm:
-            try:
-                saved_params = persist_attribs["saved_params"]
-            except KeyError:
-                saved_params = {}
-                
-            # re-decode it
-            decoded = getDecoder(ds, typename).disassemble(addr, saved_params=saved_params)
-            assert decoded["length"] == length
-            disasm = decoded["disasm"]
-            self.cdict["decoding"] = decoded
-                    
+                                
         self._addr = addr
         self._length = length
         self._disasm = disasm

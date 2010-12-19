@@ -1,5 +1,5 @@
 from dbtypes import *
-
+import arch
 
 # Algorithms that affect more than one memory location in the database
 
@@ -26,9 +26,11 @@ def rebuild(ds, arch):
             i.cdict["decoding"] = insn
 
     
-def codeFollow(ds, arch, entry_point):
+def codeFollow(ds, arch_name, entry_point):
     from types import FunctionType
     q = [entry_point]
+    arch_info = arch.machineFactory(ds, arch_name)
+
     while q:
         pc = q.pop()
 
@@ -41,7 +43,7 @@ def codeFollow(ds, arch, entry_point):
             continue
 
         try:
-            fetched_mem = ds.readBytes(pc,arch.maxInsnLength)
+            fetched_mem = ds.readBytes(pc,arch_info.max_length)
         except IOError:
             # If the generated addr is outside of mapped memory, skip it
             continue
@@ -51,37 +53,39 @@ def codeFollow(ds, arch, entry_point):
             continue
         
         try:
-            insn = arch.decode(ds, pc)
+            insn = arch_info.disassemble(pc, None)
         except IOError:
             continue
             
-        # If we can't decoded it, leave as is
+        # If we can't decode it, leave as is
         if not insn:
             continue
         
         # Make sure memory is clear
         mem_clear = True
-        for i in xrange(insn["length"]):
+        for i in xrange(insn.length()):
             try:
                 if ds[pc + i].typeclass != "default" : mem_clear = False
             except KeyError: pass
         if not mem_clear: continue
         
-        # Add destinations
-        q.extend(insn["dests"])
+        # HACK - Add destinations, use IR
+        try:
+            q.extend(insn.dests())
+        except AttributeError:
+            q.extend([insn.length()+pc])
+
 
         # Carry over old label and comment
         old_mem = ds[pc]
-        m = MemoryInfo.createFromDecoding(insn)
-        m.ds = ds
+        m = MemoryInfo.createForTypeName(ds, pc, arch_name)
         m.comment = old_mem.comment
         m.label = old_mem.label
-        
+
         # Can't serialize this
         try:
             del insn.sim
         except AttributeError: pass
-        except KeyError: pass
 
         for i in xrange(m.length):
             try:

@@ -2,9 +2,11 @@ class MachineOperand(object):
     def __init__(self,name):
         self.name = name
         self.value = None
-    def render(self):
+    
+    # FIXME: implement real rendering system
+    def render(self, context):
         """Return a Render Token for this operand."""
-        pass
+        return self.name, 0
 
 class MachineRegisterOperand(MachineOperand):
     def __init__(self,name,regno):
@@ -16,6 +18,7 @@ class MachineImmediateOperand(MachineOperand):
         super(MachineImmediateOperand,self).__init__(name)
         self.value = value
         self.width = width
+
 class MachineMemoryOperand(MachineOperand):
     def __init__(self,name,base,offset):
         super(MachineMemoryOperand,self).__init__(name)

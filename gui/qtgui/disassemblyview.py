@@ -283,7 +283,7 @@ class DisassemblyGraphicsView(QtGui.QWidget):
                 p.drawText(self.labelX, cBaseLine(label_start), "%s:" % label)
 
 
-            opcode = line_data.disasm.opcode
+            opcode = line_data.disasm.mnemonic
             
             # Draw addresses
             self.applyStyle(p, STYLE_HEXADDR)

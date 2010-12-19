@@ -4,6 +4,7 @@ import idis.tools
 import idis.tools_algos
 import arch
 
+
 from inspect import InspectWindow
 
 from PySide import QtCore
@@ -39,6 +40,7 @@ class AddBinaryPromptWindow(QtGui.QDialog):
 		self.setLayout(self.formLayout)
 		self.setWindowModality(QtCore.Qt.ApplicationModal)
 		
+
 class CommandHandler(object):
 
 	def handleAddBinary(self, addr):
@@ -63,10 +65,8 @@ class CommandHandler(object):
 		if ok:
 			self.ds[addr].label = text
 
-
 	def handleCodeFollow(self, addr):
-		# TODO Hack
-		a = arch.architectureFactory('8051')
+		a = self.gui.global_archname
 		idis.tools_algos.codeFollow(self.ds, a, addr)
 
 	def handleFollowJump(self, addr):
@@ -88,7 +88,8 @@ class CommandHandler(object):
 		
 		self.view.gotoAddress(sel, top)
 		
-	def __init__(self, ds, view):
+	def __init__(self, gui, ds, view):
+		self.gui = gui
 		self.iws = []
 		self.ds = ds
 		self.memstack = []

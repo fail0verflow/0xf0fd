@@ -4,6 +4,26 @@ import zlib
 from dbtypes import *
 from arch.shared_mem_types import *
 
+class Properties(object):
+    def __init__(self, connection):
+        self.conn = connection
+
+    def get(self, key, default = None):
+        row = self.conn.execute('''SELECT value FROM properties WHERE prop_key = ? ''', (key,)).fetchone()
+
+        if row:
+            return loads(str(row[0]))
+
+        if default != None:
+            return default
+
+        raise KeyError
+
+    def set(self, key, value):
+        self.conn.execute('''DELETE FROM properties WHERE prop_key = ?''', (key, ))
+
+        if value != None:
+            self.conn.execute('''INSERT INTO properties (prop_key, value) VALUES (?,?)''', (key, dumps(value)))
 
 class CommentList(object):
     def __init__(self, connection, table):
@@ -88,7 +108,11 @@ class DataStore:
         self.symbols = SymbolList(self.conn, "symbols")
         self.comments = CommentList(self.conn, "comments")
 
+        self.properties = Properties(self.conn)
 
+
+
+        self.db_version = self.properties.get("f0fd.db_version", 1)
 
     def addrs(self):
         self.flushInsertQueue()
@@ -151,6 +175,13 @@ class DataStore:
                 )''')
 
 
+        self.c.execute('''
+            CREATE TABLE IF NOT EXISTS properties
+                (prop_key VARCHAR(100),
+                value BLOB,
+                CONSTRAINT pk PRIMARY KEY (prop_key))
+                ''')
+
     def __iter__(self):
         self.flushInsertQueue()
         
@@ -210,26 +241,28 @@ class DataStore:
 
 
     def createDefault(self, addr):
+        # Only return a defaults object if we're within a valid memory range
         try:
-            mi = MemoryInfo.createFromDecoding(decode_numeric(self, addr))
+            self.readBytes(addr, 1)
+            mi = DefaultMock(self, addr)
+            self[addr] = mi
+            return mi
         except IOError:
             raise KeyError
-            
-        mi.typeclass = "default"
-        mi.ds = self
-        self[addr] = mi
-        return mi
    
-    # Find the first address that is numerically previous to 
-    # the argument
-    def findBeforeAddress(self, seekaddr):
+    # find the instruction that includes this address
+    def findStartForAddress(self, seekaddr):
         row = self.c.execute('''SELECT addr, length
                     FROM memory_info 
                     WHERE addr <= ? ORDER BY addr DESC LIMIT 1''',
                   (seekaddr,)).fetchone()
 
         if not row:
-            return None
+            try:
+                self.readBytes(seekaddr)
+            except IOError:
+                return None
+            return seekaddr
 
         addr, length = row
 
@@ -251,7 +284,7 @@ class DataStore:
         except KeyError:
             self.flushInsertQueue()
         
-            # No, fetch from DB
+            # No item already cached, fetch from DB
             row = self.c.execute('''SELECT addr,length,typeclass,typename,obj 
                     FROM memory_info 
                     WHERE addr <= ? ORDER BY addr DESC LIMIT 1''',
@@ -271,8 +304,8 @@ class DataStore:
                 
             self.meminfo_misses += 1
             
-            obj = MemoryInfo("key", row[0], row[1], row[2], row[3], persist_attribs=loads(str(row[4])), ds=self)
-            
+            obj = MemoryInfo.createFromParams(self, row[0], row[1], row[3], row[2], loads(str(row[4])))
+
             obj.ds_link = self.__changed
             obj.ds = self
             

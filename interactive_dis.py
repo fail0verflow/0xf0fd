@@ -24,6 +24,7 @@ import sys
 from idis.datastore import DataStore
 import idis.tools
 
+gui_instance = None
 
 # HACK - differentiate gui types
 DEFAULT_GUI_NAME = "qt"

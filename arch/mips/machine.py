@@ -17,6 +17,10 @@ class MIPSMachineInstruction(MachineInstruction):
         for op in self.operands:
             res += op.name + "=" + repr(op.value) + " "
         return res
+
+    def length(self):
+        return 4
+
 MIB = get_MachineInstructionBuilder('arch.mips.machine',MIPSMachineInstruction)
 
 class MIPSCodec(TableCodec):
@@ -903,15 +907,21 @@ class MIPSCodec(TableCodec):
 class MIPSMachine(Machine):
     shortname = "MIPS"
     longname = "MIPS"
+    typeclass = "code"
+    max_length = 4
 	
     def __init__(self,datastore,littleendian=0):
         self.datastore = datastore
         self.codec = MIPSCodec()
         self.littleendian = littleendian
 
-    def disassemble(self, id):
+    def disassemble(self, id, saved_params):
         data = self.datastore.readBytes(id,4)
-        data = struct.unpack(self.littleendian and ">I" or "<I",data)
+        
+        # Hack - convert bytes read back to a binary string
+        data = "".join([chr(i) for i in data])
+
+        data,  = struct.unpack(self.littleendian and ">I" or "<I",data)
         return self.codec.decode(data)
 
 machines = [MIPSMachine]
