@@ -7,8 +7,8 @@ import sys
 import time
 
 sys.path += [
-		os.path.dirname(sys.path[0]) 
-			]
+        os.path.dirname(sys.path[0]) 
+            ]
 
 
 
@@ -19,7 +19,7 @@ import arch
 
 testfile = '/tmp/basic_test_name'
 try:
-	os.unlink(testfile)
+    os.unlink(testfile)
 except OSError: pass
 
 ds = DataStore(testfile)
@@ -55,7 +55,7 @@ Commits: %d
 Meminfo fetches: %d
          misses: %d (%f)
        failures: %d (%f)""" % (ds.updates, ds.inserts, ds.deletes, ds.commits, ds.meminfo_fetches,
-	ds.meminfo_misses, float(ds.meminfo_misses) / ds.meminfo_fetches,
-	ds.meminfo_failures, float(ds.meminfo_failures) / ds.meminfo_fetches)
+    ds.meminfo_misses, float(ds.meminfo_misses) / ds.meminfo_fetches,
+    ds.meminfo_failures, float(ds.meminfo_failures) / ds.meminfo_fetches)
 
 print str(ds[0].disasm)

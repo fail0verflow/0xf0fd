@@ -909,7 +909,7 @@ class MIPSMachine(Machine):
     longname = "MIPS"
     typeclass = "code"
     max_length = 4
-	
+    
     def __init__(self,datastore,littleendian=0):
         self.datastore = datastore
         self.codec = MIPSCodec()
