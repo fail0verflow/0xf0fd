@@ -1,86 +1,12 @@
 import sqlite3
 from cPickle import loads, dumps
 import zlib
-from dbtypes import *
+from idis.dbtypes import *
 from arch.shared_mem_types import *
 
-class Properties(object):
-    def __init__(self, connection):
-        self.conn = connection
-
-    def get(self, key, default = None):
-        row = self.conn.execute('''SELECT value FROM properties WHERE prop_key = ? ''', (key,)).fetchone()
-
-        if row:
-            return loads(str(row[0]))
-
-        if default != None:
-            return default
-
-        raise KeyError
-
-    def set(self, key, value):
-        self.conn.execute('''DELETE FROM properties WHERE prop_key = ?''', (key, ))
-
-        if value != None:
-            self.conn.execute('''INSERT INTO properties (prop_key, value) VALUES (?,?)''', (key, dumps(value)))
-
-class CommentList(object):
-    def __init__(self, connection, table):
-        self.conn = connection
-        
-    def __len__(self):
-        return self.conn.execute('''SELECT COUNT(*) FROM comments''' % table).fetchall()[0]
-
-    # Objects are only temporary, don't keep around
-    def getComments(self, addr, position=None):
-        if position == None:
-            return self.conn.execute('''SELECT text, position FROM comments WHERE addr = ?''', (addr,)).fetchall()
-        return self.conn.execute('''SELECT text FROM comments WHERE addr = ? AND position = ?''', (addr, position)).fetchone()
-    
-    def setComment(self, addr, text, position):
-        self.conn.execute('''DELETE FROM comments WHERE addr=? AND position=?''',
-              (addr,position))
-              
-        if text:
-            self.conn.execute('''INSERT INTO comments (addr, text, position) VALUES (?,?,?)''',
-                (addr,text,position))
-                
-class SymbolList(object):
-    def __init__(self, connection, table):
-        self.conn = connection
-        
-    def __len__(self):
-        return self.conn.execute('''SELECT COUNT(*) FROM symbols''' % table).fetchall()[0]
-
-    # Objects are only temporary, don't keep around
-    def getSymbol(self, addr):
-        try:
-            return str(self.conn.execute('''SELECT name FROM symbols WHERE addr = ?''', (addr,)).fetchall()[0][0])
-        except IndexError:
-            return None
-    
-    def setSymbol(self, addr, text):
-        self.conn.execute('''DELETE FROM symbols WHERE addr=?''',
-              (addr,))
-              
-        if text:
-            self.conn.execute('''INSERT INTO symbols (addr, name) VALUES (?,?)''',
-                (addr,text))
-    
-    def listInterface(self, order, order_dir, index):
-        assert order in ["addr", "name"]
-        assert order_dir in ["ASC", "DESC"]
-
-        return self.conn.execute('''SELECT addr, name
-                                    FROM symbols
-                                    ORDER BY %s %s
-                                    LIMIT ?, 1''' % (order, order_dir), (index,)).fetchone()
-
-
-    def __len__(self):
-        return self.conn.execute('''SELECT COUNT(*) FROM symbols''').fetchall()[0][0]
-
+from properties import *
+from commentlist import *
+from symbollist import *
 
 class DataStore:
     def __init__(self, filename):
