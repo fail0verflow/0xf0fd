@@ -66,20 +66,21 @@ class ArchPromptWindow(QtGui.QWidget):
 
 
 class MainWindow(QtGui.QMainWindow):
-    def __init__(self, gui, ds, filename):
+    def __init__(self, gui, filename):
         super(MainWindow, self).__init__()
         self.gui = gui
+        self.datastore = gui.ds
         
         self.resize(800,600)
         self.setWindowTitle(filename)
         
-        disassemblyWidget = DisassemblyWidget(self, gui, ds)
-        symbolWidget = SymbolWidget(self, ds)
+        self.disassemblyWidget = DisassemblyWidget(self, gui, self.datastore)
+        symbolWidget = SymbolWidget(self, self.datastore)
         
 
-        symbolWidget.widget.symbolSelected.connect(disassemblyWidget.gotoAddress)
+        symbolWidget.widget.symbolSelected.connect(self.disassemblyWidget.gotoAddress)
 
-        self.setCentralWidget(disassemblyWidget)
+        self.setCentralWidget(self.disassemblyWidget)
         self.addDockWidget(QtCore.Qt.LeftDockWidgetArea, symbolWidget)
 
 class QTGui(object):
@@ -88,14 +89,21 @@ class QTGui(object):
 
     def startup(self):
         pass
+    
+    def createMainWindow(self):
+        mainWin = MainWindow(self, self, self.filename)
+        mainWin.show()
 
     def newWithArchCallback(self, arch):
         self.global_archname = arch
+        self.ds = DataStore(self.filename)
+        self.ds.properties.set("f0fd.HACK_arch_name", arch)
+        self.createMainWindow()
 
-        ds = DataStore(self.filename)
-        ds.properties.set("f0fd.HACK_arch_name", arch)
-        mainWin = MainWindow(self, ds, self.filename)
-        mainWin.show()
+    def runShowCallBack(self, arch):
+        self.global_archname = arch
+        self.ds.properties.set("f0fd.HACK_arch_name", arch)
+        self.createMainWindow()
 
     def mainloop(self, filenames):
         if (len(filenames) < 1):
@@ -107,27 +115,20 @@ class QTGui(object):
         self.app = QtGui.QApplication(sys.argv)
 
         if not os.path.exists(self.filename):
+            # File doesn't exist, show arch prompt window and create the datastore
             apw = ArchPromptWindow(self.newWithArchCallback)
             apw.show()
         else:
-            ds = DataStore(self.filename)
+            # File exists, make sure the architecture type is properly set
+            self.ds = DataStore(self.filename)
             try:
-                self.global_archname = ds.properties.get("f0fd.HACK_arch_name")
-                mainWin = MainWindow(self, ds, self.filename)
-                mainWin.show()
+                self.global_archname = self.ds.properties.get("f0fd.HACK_arch_name")
+                self.createMainWindow()
 
             except KeyError:
-                # Hack to set primary architecture for databases that don't have one
-                def runShowCallBack(arch):
-                    self.global_archname = arch
-                    ds.properties.set("f0fd.HACK_arch_name", arch)
-                    mainWin = MainWindow(self, ds, self.filename)
-                    mainWin.show()
-                
-                apw = ArchPromptWindow(runShowCallBack)
+                apw = ArchPromptWindow(self.runShowCallBack)
                 apw.show()
 
-           
         self.app.exec_()
 
 
