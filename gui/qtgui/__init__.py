@@ -70,7 +70,18 @@ class MainWindow(QtGui.QMainWindow):
         super(MainWindow, self).__init__()
         self.gui = gui
         self.datastore = gui.ds
-        
+
+        self.__menuBar = QtGui.QMenuBar(self)
+        self.fileMenu = QtGui.QMenu("Edit", self)
+        self.undoAction = self.fileMenu.addAction("Undo")
+        self.redoAction = self.fileMenu.addAction("Redo")
+
+        self.undoAction.triggered.connect(self.doUndo)
+
+        self.menuBar().addMenu(self.fileMenu)
+        #self.setMenuBar(self.__menuBar)
+    
+    
         self.resize(800,600)
         self.setWindowTitle(filename)
         
@@ -82,6 +93,10 @@ class MainWindow(QtGui.QMainWindow):
 
         self.setCentralWidget(self.disassemblyWidget)
         self.addDockWidget(QtCore.Qt.LeftDockWidgetArea, symbolWidget)
+
+    def doUndo(self):
+        self.datastore.cmdlist.rewind(1)
+        self.disassemblyWidget.update()
 
 class QTGui(object):
     def __init__(self):

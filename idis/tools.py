@@ -45,8 +45,7 @@ def decodeAs(ds, dec_type, memaddr):
 
 def follow(ds, addr):
     try:
-        insn = ds[addr].cdict["decoding"]
-        dests = insn["dests"]
+        dests = ds[addr].disasm.dests()
         
     except KeyError: return None
 

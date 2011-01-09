@@ -208,7 +208,7 @@ class MemoryInfo(object):
         self.ds_link = None
 
         # Create the custom properties dictionary
-        self.__cdict = dict() #proxy_dict(self.push_changes)
+        self.__cdict = dict()
         
         if not persist_attribs:
             self.persist_attribs = proxy_dict(self.push_changes)

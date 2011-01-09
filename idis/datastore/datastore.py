@@ -2,6 +2,7 @@ import sqlite3
 from cPickle import loads, dumps
 import zlib
 from idis.dbtypes import *
+from idis.command_list import CommandList
 from arch.shared_mem_types import *
 
 from properties import *
@@ -34,6 +35,7 @@ class DataStore:
 
         self.symbols = SymbolList(self.conn, "symbols")
         self.comments = CommentList(self.conn, "comments")
+        self.cmdlist = CommandList(self)
 
         self.properties = Properties(self.conn)
 

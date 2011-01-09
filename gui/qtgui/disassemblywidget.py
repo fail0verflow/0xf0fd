@@ -76,6 +76,9 @@ class DisassemblyWidget(QtGui.QAbstractScrollArea):
                 self.view.update()
                 self.ds.flush()
 
+    def update(self):
+        self.view.update()
+
     @QtCore.Slot(int)
     def gotoAddress(self, val, top=None):
         if top == None:

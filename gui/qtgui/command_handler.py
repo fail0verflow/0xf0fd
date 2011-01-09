@@ -4,6 +4,7 @@ import idis.tools
 import idis.tools_algos
 import arch
 
+from idis.cmd.command import *
 
 from inspect import InspectWindow
 
@@ -62,8 +63,8 @@ class CommandHandler(object):
     def handleSetLabel(self, addr):
         oldlabel = self.ds[addr].label
         text, ok = QtGui.QInputDialog.getText(None, "Set Label", "Enter a label for addr %04x" % addr, text=oldlabel)
-        if ok:
-            self.ds[addr].label = text
+        if ok and text != oldlabel:
+            self.ds.cmdlist.push(SymbolNameCommand(addr, text))
 
     def handleCodeFollow(self, addr):
         a = self.gui.global_archname
@@ -73,7 +74,7 @@ class CommandHandler(object):
         newaddr = idis.tools.follow(self.ds, addr)
         try:
             self.ds[newaddr]
-            self.memstack = [(self.view.view.getTopAddr(), self.view.view.getSelAddr())]
+            self.memstack.append((self.view.view.getTopAddr(), self.view.view.getSelAddr()))
                 
             self.view.gotoAddress(newaddr)
                 
