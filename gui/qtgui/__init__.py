@@ -106,7 +106,7 @@ class QTGui(object):
         pass
     
     def createMainWindow(self):
-        mainWin = MainWindow(self, self, self.filename)
+        mainWin = MainWindow(self, self.filename)
         mainWin.show()
 
     def newWithArchCallback(self, arch):
