@@ -44,9 +44,12 @@ class FDTextArea(object):
         self.x_0 = x
         self.y_0 = y
     
+        self.setupFontParams()
+
         self.resize(width, height)
 
         self.selectedLine = None
+
 
     def mixColors(self, a, b):
         dfw_r = 255 - a.red()
@@ -59,13 +62,30 @@ class FDTextArea(object):
 
         return QColor(new_r, new_g, new_b)
 
-    
+   
+    def mapCoords(self, x, y):
+        """ Returns line, character_pos, tag [if present] """
+        line = (y - self.y_0) / self.c_height
+        char = (x - self.x_0) / self.c_width
+        
+        try:
+            row = self.row_map[line]
+            block = [i for i in row if i.col <= char and (i.col + len(i.text)) > char][0]
+            tag = block.tag
+
+        except IndexError:
+            tag = None
+
+        return line, char, tag
+
     def setSelectedLine(self, line):
         self.selectedLine = line
 
     def resize(self, width, height):
         self.width = width
         self.height = height
+
+        self.nlines = math.ceil(self.height / float(self.c_height))
 
 
     def clear(self):
@@ -82,18 +102,15 @@ class FDTextArea(object):
 
         row_o.sort(lambda a,b: cmp(a.col, b.col))
 
-    def setupFontParams(self, p):
-        p.setFont(self.font)
-        metrics = p.fontMetrics()
+    def setupFontParams(self):
+        metrics = QFontMetrics(self.font)
 
         self.c_width = metrics.width(' ')
         self.c_height = metrics.height()
         self.c_baseline = metrics.ascent()
        
-        self.nlines = math.ceil(self.height / float(self.c_height))
 
     def drawArea(self, p):
-        self.setupFontParams(p)
 
         bg_brush = QBrush(self.bgcolor)
 

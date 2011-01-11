@@ -29,20 +29,25 @@ class DisassemblyGraphicsView(QtGui.QWidget):
         self.memaddr_top = 0
         self.memaddr_selected = 0
         
-        self.font = QtGui.QFont("courier")
-        self.font_bold = QtGui.QFont("courier", weight=75)
-
         # Used for calculating clicks
         self.line_addr_map = {}
 
         # Used for drawing arrows
         self.addr_line_map = {}
 
-        self.atv = FDTextArea(80, 0, self.width() - 80, self.height())
-        self.arv = FDArrowView(0, 0, 80, self.height())
+        self.arrowWidth = 80
 
-    def getClickAddr(self, y):
-        lineIndex = y / self.atv.c_height
+        self.atv = FDTextArea(self.arrowWidth, 0, self.width() - self.arrowWidth, self.height())
+        self.arv = FDArrowView(0, 0, self.arrowWidth, self.height(), self.atv.c_height)
+
+        self.setSizes()
+
+    def setSizes(self):
+        self.atv.resize(self.width() - self.arrowWidth, self.height())
+        self.arv.resize(self.arrowWidth, self.height())
+
+    def getClickAddr(self, x, y):
+        lineIndex, char, tag = self.atv.mapCoords(x, y)
         return self.line_addr_map[lineIndex]
         
         
@@ -59,7 +64,11 @@ class DisassemblyGraphicsView(QtGui.QWidget):
     def setSelAddr(self, memaddr_selected):
         self.memaddr_selected = memaddr_selected
         self.update()
-    
+   
+    def resizeEvent(self, event):
+        super(DisassemblyGraphicsView, self).resizeEvent(event)
+        self.setSizes()
+
     # Apply styling to text to be drawn; depending on object type
     # FIXME: This should pull styling info from the config
     def getStyle(self, styleType):
@@ -111,10 +120,7 @@ class DisassemblyGraphicsView(QtGui.QWidget):
     def drawWidget(self, p):
         self.atv.clear()
         self.arv.clear()
-        self.atv.setupFontParams(p)
 
-        p.setFont(self.font)
-        
         self.line_addr_map = {}
         self.addr_line_map = {}
         
@@ -193,7 +199,7 @@ class DisassemblyGraphicsView(QtGui.QWidget):
                 text, opc_type = operand.render(self.ds)
                 
                 opcode_text = text
-                self.atv.addText(i+disasm_start, opcodeX, opcode_text, self.getStyle(opc_type))
+                self.atv.addText(i+disasm_start, opcodeX, opcode_text, self.getStyle(opc_type), opcode_text)
                 opcodeX += len(opcode_text)
                 
                 
@@ -215,9 +221,12 @@ class DisassemblyGraphicsView(QtGui.QWidget):
             i += lines_needed
             i_mod += 1
 
-        self.atv.setSelectedLine(self.addr_line_map[self.memaddr_selected])
+        try:
+            self.atv.setSelectedLine(self.addr_line_map[self.memaddr_selected])
+        except KeyError:
+            self.atv.setSelectedLine(None)
+
         self.atv.drawArea(p)
-        
         self.arv.render(p,self.addr_line_map)
 
 

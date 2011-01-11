@@ -24,10 +24,10 @@ class Arrow(object):
 
 
 class FDArrowView(object):
-    def __init__(self, x, y, width, height):
+    def __init__(self, x, y, width, height, line_height):
         self.resize(width, height)
         self.arrows_addrs = []
-        self.height = 12
+        self.line_height = line_height
         self.arrowEnd = 75
 
 
@@ -78,8 +78,9 @@ class FDArrowView(object):
         self.applyStyle(p, style)
 
         # Draw the lines of the arrow
-        asp = startLine * self.height + self.height/2
-        aep = endLine * self.height + self.height/2
+        asp = startLine * self.line_height + self.line_height/2
+        aep = endLine * self.line_height + self.line_height/2
+
         p.drawLine(col, asp, self.arrowEnd, asp)
         p.drawLine(col, asp, col, aep)
         p.drawLine(col, aep, self.arrowEnd, aep)
@@ -94,7 +95,7 @@ class FDArrowView(object):
         arrows = [ Arrow(src, dst)
                     for src, dst in self.arrows_addrs
                     if src in addr_line_map and dst in addr_line_map ]
-        
+       
         # build a DAG ordering inner to outer
         nodes = []
         for i in arrows:

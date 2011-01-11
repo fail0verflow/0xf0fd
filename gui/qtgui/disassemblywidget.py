@@ -89,7 +89,7 @@ class DisassemblyWidget(QtGui.QAbstractScrollArea):
 
 
     def mousePressEvent(self, evt):
-        self.view.setSelAddr(self.view.getClickAddr(evt.y()))
+        self.view.setSelAddr(self.view.getClickAddr(evt.x(), evt.y()))
         
     def scrollEvent(self, value):
         seek_addr = self.ds.findStartForAddress(value)
@@ -99,5 +99,7 @@ class DisassemblyWidget(QtGui.QAbstractScrollArea):
     def paintEvent(self, event):
         self.view.paintEvent(event)
 
-
+    def resizeEvent(self, event):
+        super(DisassemblyWidget, self).resizeEvent(event)
+        self.view.resizeEvent(None)
 
