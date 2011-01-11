@@ -21,7 +21,8 @@ class DisassemblyGraphicsView(QtGui.QWidget):
         self.disasmX = 14
         self.firstOpcodeX = 25
         self.commentX = 80
-        
+       
+        self.sel_color = QtGui.QColor(190, 190, 255)
         
         self.ds = ds
         self.resize(800, 600)
@@ -71,7 +72,7 @@ class DisassemblyGraphicsView(QtGui.QWidget):
 
     # Apply styling to text to be drawn; depending on object type
     # FIXME: This should pull styling info from the config
-    def getStyle(self, styleType):
+    def getStyle(self, styleType, selected=False):
         symbolic_col        = QtGui.QColor(  0, 200,   0)
         fg_col              = QtGui.QColor(  0,   0,   0)
         comment_col         = QtGui.QColor(127, 127, 127)
@@ -222,9 +223,9 @@ class DisassemblyGraphicsView(QtGui.QWidget):
             i_mod += 1
 
         try:
-            self.atv.setSelectedLine(self.addr_line_map[self.memaddr_selected])
+            self.atv.setRowHighlight(self.addr_line_map[self.memaddr_selected], self.sel_color)
         except KeyError:
-            self.atv.setSelectedLine(None)
+            pass
 
         self.atv.drawArea(p)
         self.arv.render(p,self.addr_line_map)

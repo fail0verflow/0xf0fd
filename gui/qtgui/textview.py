@@ -4,8 +4,8 @@ import math
 
 class FDTextAttribs(object):
     def __init__(self, 
-        color=QColor(0,0,0), 
-        bgcolor=QColor(255,255,255),
+        color=None, 
+        bgcolor=None,
         isBold = False,
         isItalic = False,
             ):
@@ -32,23 +32,20 @@ class FDTextBlock(object):
 #
 
 class FDTextArea(object):
-    def __init__(self, x,y,width, height):
-        self.row_map = {}
+    def __init__(self, x,y,width, height, bgcolor=QColor(255,255,255), fgcolor=QColor(0,0,0)):
         
         self.font_family = "courier"
         self.font = QFont(self.font_family)
         self.font_bold = QFont(self.font_family, weight=75)
-        self.bgcolor = QColor(255,255,255)
-        self.fgcolor = QColor(0,0,0)
-        self.sel_color = QColor(190, 190, 255)
+        self.bgcolor = bgcolor
+        self.fgcolor = fgcolor
         self.x_0 = x
         self.y_0 = y
     
         self.setupFontParams()
 
         self.resize(width, height)
-
-        self.selectedLine = None
+        self.clear()
 
 
     def mixColors(self, a, b):
@@ -78,9 +75,6 @@ class FDTextArea(object):
 
         return line, char, tag
 
-    def setSelectedLine(self, line):
-        self.selectedLine = line
-
     def resize(self, width, height):
         self.width = width
         self.height = height
@@ -90,6 +84,10 @@ class FDTextArea(object):
 
     def clear(self):
         self.row_map = {}
+        self.row_highlights = {}
+
+    def setRowHighlight(self, row, color):
+        self.row_highlights[row] = color
 
     def addText(self, row, col, text, attribs, tag=None):
         self.attribs = attribs
@@ -122,8 +120,10 @@ class FDTextArea(object):
             row_bot_y = self.y_0 + self.c_height * (row + 1)
             row_baseline_y = self.y_0 + self.c_height * row + self.c_baseline
 
-            if self.selectedLine == row:
-                p.fillRect(self.x_0, row_top_y, self.width, self.c_height, self.sel_color)
+            try:
+                p.fillRect(self.x_0, row_top_y, self.width, self.c_height, self.row_highlights[row])
+            except KeyError:
+                pass
 
             for block in blocks:
                 attribs = block.attribs
@@ -134,19 +134,26 @@ class FDTextArea(object):
                 p.setPen(self.fgcolor)
                 p.setFont(self.font)
 
+                bgcolor = self.bgcolor
+                fgcolor = self.fgcolor
+
                 if attribs:
-                    if self.selectedLine == row:
+                    bgcolor = attribs.bgcolor if attribs.bgcolor else self.bgcolor
+                    fgcolor = attribs.color if attribs.color else self.fgcolor
+
+                    try:
+                        
                         p.fillRect(QRect(block_start_x, row_top_y, 
-                            block_width, self.c_height), self.mixColors(attribs.bgcolor, self.sel_color))
-                    else:
-                        p.fillRect(QRect(block_start_x, row_top_y, 
-                            block_width, self.c_height), attribs.bgcolor)
+                            block_width, self.c_height), self.mixColors(bgcolor, self.row_highlights[row]))
+                    except KeyError:
+                        if bgcolor != self.bgcolor:
+                            p.fillRect(QRect(block_start_x, row_top_y, 
+                                block_width, self.c_height), bgcolor)
 
                         
-                    p.setPen(attribs.color)
                     if attribs.isBold:
                         p.setFont(self.font_bold)
 
-
+                p.setPen(fgcolor)
                 p.drawText(block_start_x, row_baseline_y, block.text)
 
