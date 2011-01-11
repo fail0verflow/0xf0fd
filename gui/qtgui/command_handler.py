@@ -5,13 +5,42 @@ import idis.tools_algos
 import arch
 
 from idis.cmd.command import *
-
+from idis.dbtypes import CommentPosition
 from inspect import InspectWindow
 
 from PySide import QtCore
 from PySide import QtGui
 
 keyList = dict([(getattr(QtCore.Qt, key), key) for key in dir(QtCore.Qt) if key.startswith('Key')])
+
+
+class AddCommentWindow(QtGui.QDialog):
+    def __init__(self, position, oldcomment):
+        super(AddCommentWindow, self).__init__()
+
+        positionText = {
+            CommentPosition.POSITION_BEFORE: "Pre-line comment",
+            CommentPosition.POSITION_RIGHT:  "Line comment",
+            CommentPosition.POSITION_BOTTOM: "Post-line comment"
+            }[position]
+
+        okButton = QtGui.QPushButton("OK")
+        okButton.setDefault(True)
+        QtCore.QObject.connect(okButton, QtCore.SIGNAL('clicked()'), self.accept)
+
+        buttonBox = QtGui.QDialogButtonBox(QtCore.Qt.Vertical)
+        buttonBox.addButton(okButton, QtGui.QDialogButtonBox.ActionRole)
+
+        self.formLayout = QtGui.QFormLayout()
+        self.positionLabel = QtGui.QLabel(positionText)
+        self.edit = QtGui.QTextEdit(oldcomment)
+        
+        self.formLayout.addRow("&Position:", self.positionLabel)
+        self.formLayout.addRow("&Comment text:", self.edit)
+
+        self.formLayout.addWidget(buttonBox)
+        self.setLayout(self.formLayout)
+        self.setWindowModality(QtCore.Qt.ApplicationModal)
 
 class AddBinaryPromptWindow(QtGui.QDialog):
     def __init__(self):
@@ -44,7 +73,16 @@ class AddBinaryPromptWindow(QtGui.QDialog):
 
 class CommandHandler(object):
 
+    def handleSetStdComment(self, ident, pos=CommentPosition.POSITION_RIGHT):
+        oldcomment = self.ds.comments.getCommentText(ident, pos)
+
+        cw = AddCommentWindow(pos, oldcomment)
+        cw.exec_()
+        self.ds.cmdlist.push(CommentCommand(ident, pos, cw.edit.toPlainText()))
+
+
     def handleAddBinary(self, addr):
+        # FIXME: use command pattern
         filename, filter = QtGui.QFileDialog.getOpenFileName()
         bpw = AddBinaryPromptWindow()
         bpw.exec_()
@@ -67,6 +105,7 @@ class CommandHandler(object):
             self.ds.cmdlist.push(SymbolNameCommand(addr, text))
 
     def handleCodeFollow(self, addr):
+        # FIXME: use command pattern [super object]
         a = self.gui.global_archname
         idis.tools_algos.codeFollow(self.ds, a, addr)
 
@@ -101,7 +140,8 @@ class CommandHandler(object):
             QtCore.Qt.Key_C: self.handleCodeFollow,
             QtCore.Qt.Key_Return: self.handleFollowJump,
             QtCore.Qt.Key_L: self.handleSetLabel,
-            QtCore.Qt.Key_Backspace: self.handleCodeReturn
+            QtCore.Qt.Key_Backspace: self.handleCodeReturn,
+            QtCore.Qt.Key_Semicolon: self.handleSetStdComment
             }
         
     def handleCommand(self, addr, cmd):

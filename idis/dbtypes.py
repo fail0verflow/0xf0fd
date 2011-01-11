@@ -166,17 +166,13 @@ class MemoryInfo(object):
     # Text form of the decoding [TODO: rename?]
     disasm = SUD("_disasm")
     
-    # Check comments against the main DB
-    def __setcomment(self, text):
-    
-        self.ds.comments.setComment(self.addr, text, CommentPosition.POSITION_RIGHT)        
     def __getcomment(self):
         comment = self.ds.comments.getComments(self.addr, position=CommentPosition.POSITION_RIGHT)
         if not comment:
             return ""
         return comment[0]
         
-    comment = property(__getcomment, __setcomment)
+    comment = property(__getcomment)
     
     # General type of the data
     # Currently two valid values ["code", "data"]
@@ -190,12 +186,9 @@ class MemoryInfo(object):
     # Actual type of the data
     typename = SUD("_typename")
 
-    # Check symbol against main datasource
-    def __setlabel(self, label):
-        self.ds.symbols.setSymbol(self.addr, label)     
     def __getlabel(self):
         return self.ds.symbols.getSymbol(self.addr)
-    label = property(__getlabel, __setlabel)
+    label = property(__getlabel)
     
     def __get_cdict(self): return self.__cdict
     cdict = property(__get_cdict)

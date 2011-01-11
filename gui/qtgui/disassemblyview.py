@@ -1,6 +1,6 @@
 from PySide import QtCore, QtGui
 from arch.shared_opcode_types import *
-
+from idis.dbtypes import CommentPosition
 from textview import FDTextArea, FDTextAttribs
 from arrow_view import FDArrowView
 
@@ -20,7 +20,7 @@ class DisassemblyGraphicsView(QtGui.QWidget):
         self.labelX = 12
         self.disasmX = 14
         self.firstOpcodeX = 25
-        self.commentX = 80
+        self.commentX = 50
        
         self.sel_color = QtGui.QColor(190, 190, 255)
         
@@ -211,8 +211,9 @@ class DisassemblyGraphicsView(QtGui.QWidget):
                     opcodeX += len(separator)
 
             # Draw comment
-            if line_data.comment:
-                self.atv.addText(i+disasm_start, self.commentX, "; %s" % line_data.comment, self.getStyle(STYLE_COMMENT))
+            comment = self.ds.comments.getCommentText(line_memaddr, CommentPosition.POSITION_RIGHT) 
+            if comment:
+                self.atv.addText(i+disasm_start, self.commentX, "; %s" % comment, self.getStyle(STYLE_COMMENT))
             
             # Draw divider
             if divider_start != None:

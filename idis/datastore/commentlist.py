@@ -11,7 +11,13 @@ class CommentList(object):
         if position == None:
             return self.conn.execute('''SELECT text, position FROM comments WHERE addr = ?''', (addr,)).fetchall()
         return self.conn.execute('''SELECT text FROM comments WHERE addr = ? AND position = ?''', (addr, position)).fetchone()
-    
+
+    def getCommentText(self, addr, position):
+        c = self.conn.execute('''SELECT text FROM comments WHERE addr = ? AND position = ?''', (addr, position)).fetchone()
+        if not c:
+            return ""
+        return c[0]
+
     def setComment(self, addr, text, position):
         self.conn.execute('''DELETE FROM comments WHERE addr=? AND position=?''',
               (addr,position))

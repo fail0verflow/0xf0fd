@@ -1,8 +1,29 @@
+from cmd import SuperCommand
+
 class CommandList(object):
     def __init__(self, datastore):
         self.datastore = datastore
         self.cmds = []
         self.forward = []
+
+        self.wrap_stack = []
+
+    def __get_wrapped(self):
+        return len(self.wrap_stack) > 0
+    wrapped = property(__get_wrapped)
+
+    def supercommand_wrap(self, callback):
+        # Push all wrapped commands into a "SuperCommand" so 
+        # they are undone as a block
+
+        s = SuperCommand()
+        self.wrap_stack.append(self.cmds)
+        self.cmds = s.getInternalList()
+        callback()
+        self.cmds = self.wrap_stack.pop()
+        s._markAlreadyRan()
+        self.cmds.append(s)
+
 
     def push(self, cmd):
         self.cmds.append(cmd)
