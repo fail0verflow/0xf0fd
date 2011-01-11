@@ -127,22 +127,36 @@ class CommandHandler(object):
             return
         
         self.view.gotoAddress(sel, top)
-        
+    
+    def buildCmdHandlers(self, pairs):
+        """ call with a set of pairs such as: 
+            [ ( "Semicolon", "AddBinary" ) ] """
+
+        self.cmd_handlers = dict([
+            (getattr(QtCore.Qt, "Key_%s" % a), getattr(self, "handle%s" % b))
+                for a, b in pairs
+            ])
+
+
     def __init__(self, gui, ds, view):
         self.gui = gui
         self.iws = []
         self.ds = ds
         self.memstack = []
         self.view = view
-        self.cmd_handlers = {
-            QtCore.Qt.Key_A: self.handleAddBinary,
-            QtCore.Qt.Key_I: self.handleInspect,
-            QtCore.Qt.Key_C: self.handleCodeFollow,
-            QtCore.Qt.Key_Return: self.handleFollowJump,
-            QtCore.Qt.Key_L: self.handleSetLabel,
-            QtCore.Qt.Key_Backspace: self.handleCodeReturn,
-            QtCore.Qt.Key_Semicolon: self.handleSetStdComment
-            }
+
+        handlers = [
+            ("A", "AddBinary"),
+            ("I", "Inspect"),
+            ("C", "CodeFollow"),
+            ("Return", "FollowJump"),
+            ("N", "SetLabel"),
+            ("Backspace", "CodeReturn"),
+            ("Escape", "CodeReturn"),
+            ("Semicolon", "SetStdComment")
+            ]
+
+        self.buildCmdHandlers(handlers)
         
     def handleCommand(self, addr, cmd):
         try:
