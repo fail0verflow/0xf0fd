@@ -2,6 +2,8 @@ from arch.common.machine import *
 import arch.common.bits as bits
 from arch.common.builders import get_MachineInstructionBuilder
 
+from arch.common.hacks import *
+
 import opcode_8051
 
 
@@ -23,7 +25,7 @@ class i8051MachineInstruction(MachineInstruction):
     def dests(self):
         return self.__dests
 
-MIB = get_MachineInstructionBuilder('arch.mips.machine',i8051MachineInstruction)
+MIB = get_MachineInstructionBuilder('arch.i8051.machine',i8051MachineInstruction)
 
 def i8051Adaptor(id, bytes):
     rv = opcode_8051.decode_bytes(id, bytes)
@@ -33,7 +35,19 @@ def i8051Adaptor(id, bytes):
 
     disasm = rv["disasm"]
     length = rv["length"]
-    dests = rv["dests"]
+
+    # NOTE - both of these should be derived from the IR
+    # They are done processor specific simply to allow development
+    # of the gui while the IR is still early.
+    # Yes, this is a HACK
+
+    dests_jmp = rv["dests"]
+    try:
+        dests_call = rv["dests_call"]
+    except KeyError:
+        dests_call = []
+
+    dests = [(i, REL_JUMP) for i in dests_jmp] + [(i, REL_CALL) for i in dests_call]
 
     return MIB(disasm.opcode, None)(
         length,dests, *disasm.operands)

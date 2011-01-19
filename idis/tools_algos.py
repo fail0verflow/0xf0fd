@@ -71,7 +71,7 @@ def codeFollow(ds, arch_name, entry_point):
         
         # HACK - Add destinations, use IR
         try:
-            q.extend(insn.dests())
+            q.extend([i for i, _ in insn.dests()])
         except AttributeError:
             q.extend([insn.length()+pc])
 
@@ -108,7 +108,7 @@ def xrefsPass(ds):
             dests = insn["dests"]
         except KeyError: continue
         
-        for j in dests:
+        for j, _ in dests:
             if j == ds[i].addr + ds[i].length: continue
             try:
                 ds[j].xrefs.append((i, ds[i].disasm.opcode))
@@ -141,7 +141,7 @@ def labelsPass(ds):
             insn = ds[i].cdict["decoding"]
             dests = insn["dests"]
         except KeyError: continue
-        for j in dests:
+        for j, _ in dests:
             # If the dest is a jmp to the next insn, skip
             if j == ds[i].addr + ds[i].length: continue
             

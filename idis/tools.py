@@ -49,7 +49,7 @@ def follow(ds, addr):
         
     except KeyError: return None
 
-    for j in dests:
+    for j, _ in dests:
         if j == addr + ds[addr].length: continue
         
         try:

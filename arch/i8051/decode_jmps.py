@@ -6,7 +6,8 @@ def decode_acall_ajmp(pc, opc, addrl):
 
     return DictProxy(
                 addr = pc,
-                dests = [calc_addr, pc+2] if wtype == "call" else [calc_addr],
+                dests = [pc+2] if wtype == "call" else [calc_addr],
+                dests_call = [calc_addr] if wtype == "call" else [],
                 disasm = AE("a%s" % wtype, a_PC(calc_addr)),
                 length = 2,
                 cycles = 2
@@ -79,7 +80,9 @@ def decode_lcall(pc, opc, addrh, addrl):
     return DictProxy(
                 addr = pc,
                 disasm = AE("lcall", a_PC(newpc)),
-                dests = [newpc, pc+3],
+                dests = [pc+3],
+                dests_call = [newpc],
+
                 cycles = 2,
                 sim = runner,
                 length = 3

@@ -1,5 +1,11 @@
+import time
+
 from PySide import QtCore, QtGui
 from arch.shared_opcode_types import *
+
+# TODO: Removeme
+from arch.common.hacks import *
+
 from idis.dbtypes import CommentPosition
 from textview import FDTextArea, FDTextAttribs
 from arrow_view import FDArrowView
@@ -106,7 +112,7 @@ class DisassemblyGraphicsView(QtGui.QWidget):
             label_start = 1
 
         try:
-            if data.addr + data.length not in data.disasm.dests():
+            if data.addr + data.length not in [i for i, _ in data.disasm.dests()]:
                 lines_needed += 2
                 divider_start = disasm_start+1
 
@@ -184,8 +190,8 @@ class DisassemblyGraphicsView(QtGui.QWidget):
             # Add addr to disasm
             try:
                 for arrow in [ (line_data.addr, dest) 
-                            for dest in line_data.disasm.dests()
-                            if dest != line_data.addr + line_data.length]:
+                            for dest, desttype in line_data.disasm.dests()
+                            if dest != line_data.addr + line_data.length and desttype == REL_JUMP]:
                     self.arv.addArrow(arrow[0], arrow[1])
 
             except AttributeError:
@@ -224,16 +230,38 @@ class DisassemblyGraphicsView(QtGui.QWidget):
             i_mod += 1
 
         try:
-            self.atv.setRowHighlight(self.addr_line_map[self.memaddr_selected], self.sel_color)
+            selection_line = self.addr_line_map[self.memaddr_selected]
         except KeyError:
             pass
+        else:
+            self.atv.setRowHighlight(selection_line, self.sel_color)
+
+        self.arv.setSelectedAddr(self.memaddr_selected)
+        
+        # Render [and time] the text and arrow areas
+        time_rendering = False
+
+        if time_rendering:
+            render_start = time.time()
 
         self.atv.drawArea(p)
+
+        if time_rendering:
+            render_text = time.time()
+
         self.arv.render(p,self.addr_line_map)
 
+        if time_rendering:
+            render_end = time.time()
+            print "Frame render time: %f %f" % (render_text - render_start, render_end - render_text)
 
 
     def paintEvent(self, event):
+        time_paintEvents = False
+
+        if time_paintEvents:
+            start = time.time()
+
         p = QtGui.QPainter()
         p.begin(self)
         # Wrap the actual paint code to prevent QT crashes
@@ -242,4 +270,8 @@ class DisassemblyGraphicsView(QtGui.QWidget):
             self.drawWidget(p)
         finally:
             p.end()
+
+        if time_paintEvents:
+            end = time.time()
+            print end-start
 
