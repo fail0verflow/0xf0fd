@@ -1,4 +1,4 @@
-from cmd import SuperCommand
+from cmd import CompoundCommand
 
 class CommandList(object):
     def __init__(self, datastore):
@@ -13,10 +13,10 @@ class CommandList(object):
     wrapped = property(__get_wrapped)
 
     def supercommand_wrap(self, callback):
-        # Push all wrapped commands into a "SuperCommand" so 
+        # Push all wrapped commands into a "CompoundCommand" so 
         # they are undone as a block
 
-        s = SuperCommand()
+        s = CompoundCommand()
         self.wrap_stack.append(self.cmds)
         self.cmds = s.getInternalList()
         callback()

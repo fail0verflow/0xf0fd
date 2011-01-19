@@ -1,6 +1,9 @@
+from idis.dbtypes import CommentPosition
+
 class BaseCommand(object):
     def __init__(self):
         self.__ran = False
+
     def execute(self):
         assert not self.__ran
         self.__ran = True
@@ -19,6 +22,7 @@ class CommentCommand(BaseCommand):
     def __init__(self, ident, position, text):
         BaseCommand.__init__(self)
         assert position != None
+        assert position in CommentPosition.__dict__.values()
         self.__ident = ident
         self.__newtext = text
         self.__position = position
@@ -47,7 +51,7 @@ class SymbolNameCommand(BaseCommand):
         BaseCommand.undo(self)
         datastore.symbols.setSymbol(self.__ident, self.__undoname)
 
-class SuperCommand(BaseCommand):
+class CompoundCommand(BaseCommand):
     def __init__(self):
         BaseCommand.__init__(self)
         self.cmds = []
