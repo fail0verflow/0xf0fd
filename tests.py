@@ -2,7 +2,7 @@
 
 import unittest
 from idis.datastore import DataStore
-from idis.dbtypes import Segment
+from idis.dbtypes import Segment, CommentPosition
 from idis.tools import *
 
 class basicSectionTestCase(unittest.TestCase):
@@ -68,7 +68,21 @@ class basicSectionTestCase(unittest.TestCase):
         
         self.assertEqual(fired[0], True)
 
-        
-                    
+    
+    def testCodeFolow(self):
+        ds = DataStore(":memory:")
+        addBinary(ds, "performance/src/8051_flash_trunc.bin", 0, 0, 0x8000)
+        codeFollow(ds, "8051", 0)
+
+    def testCodeFollowCheckCommentLabels(self):
+        ds = DataStore(":memory:")
+        addBinary(ds, "performance/src/8051_flash_trunc.bin", 0, 0, 0x8000)
+        ds.symbols.setSymbol(0x0, "hello")
+        ds.comments.setComment(0x0, "blah", CommentPosition.POSITION_RIGHT)
+        codeFollow(ds, "8051", 0)
+
+        self.assertEqual(ds.symbols.getSymbol(0x0), "hello")
+        self.assertEqual(ds.comments.getCommentText(0x0, CommentPosition.POSITION_RIGHT), "blah")
+
 if __name__ == '__main__':
     unittest.main()
