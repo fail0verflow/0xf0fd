@@ -41,7 +41,6 @@ def getGuiClass(gui_args):
 
     guis = {
         "qt": ("gui.qtgui", "gui.qtgui.QTGui"),
-        "curses": ("gui.curses_gui", "gui.curses_gui.CursesGui")
         }
 
     if not gui_name in guis:
