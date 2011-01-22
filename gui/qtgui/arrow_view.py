@@ -196,7 +196,8 @@ class FDArrowView(object):
             selected = self.selected_addr in [a.src, a.dst]
 
             for arrow in [a] + a.equiv_arrows:
-                
+                skip_arrow = False
+
                 try:
                     src_line = addr_line_map[arrow.src]
                 except KeyError:
@@ -205,7 +206,8 @@ class FDArrowView(object):
                     elif arrow.src > max_addr:
                         src_line = self.MAGIC_AFTERWIN
                     else:
-                        assert False, "arrow destination not in index and not offscreen"
+                        skip_arrow = True
+
 
                 try:
                     dst_line = addr_line_map[a.dst]
@@ -215,14 +217,14 @@ class FDArrowView(object):
                     elif arrow.dst > max_addr:
                         dst_line = self.MAGIC_AFTERWIN
                     else:
-                        assert False, "arrow destination not in index and not offscreen"
+                        skip_arrow = True
 
-
-                self.drawArrow(p, 
-                    arrow.min_x, 
-                    src_line,
-                    dst_line,
-                    selected)
+                if not skip_arrow:
+                    self.drawArrow(p, 
+                        arrow.min_x, 
+                        src_line,
+                        dst_line,
+                        selected)
 
                 arrow.drawn = True
 

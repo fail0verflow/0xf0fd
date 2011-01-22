@@ -36,7 +36,15 @@ class FDTextArea(object):
         
         self.font_family = "courier"
         self.font = QFont(self.font_family)
+        self.font.setFixedPitch(True)
+        self.font.setKerning(False)
+        self.font.setStyleHint(QFont.Courier, QFont.PreferBitmap)
+
         self.font_bold = QFont(self.font_family, weight=75)
+        self.font_bold.setFixedPitch(True)
+        self.font.setKerning(False)
+        self.font.setStyleHint(QFont.Courier, QFont.PreferBitmap)
+
         self.bgcolor = bgcolor
         self.fgcolor = fgcolor
         self.x_0 = x
@@ -62,8 +70,8 @@ class FDTextArea(object):
    
     def mapCoords(self, x, y):
         """ Returns line, character_pos, tag [if present] """
-        line = (y - self.y_0) / self.c_height
-        char = (x - self.x_0) / self.c_width
+        line = int((y - self.y_0) / self.c_height)
+        char = int((x - self.x_0) / self.c_width)
         
         try:
             row = self.row_map[line]
@@ -101,12 +109,23 @@ class FDTextArea(object):
         row_o.sort(lambda a,b: cmp(a.col, b.col))
 
     def setupFontParams(self):
-        metrics = QFontMetrics(self.font)
+        metrics = QFontMetricsF(self.font)
 
-        self.c_width = metrics.width(' ')
         self.c_height = metrics.height()
         self.c_baseline = metrics.ascent()
-       
+ 
+        # Ugly hack - QFontMetricsF(font) gives us wrong values
+        #  but since we can only get Integer font metrics on 
+        #  a QPainter, we need to average it from a long string
+        #
+        # For now, in testing this fixes issues on Mac OS X
+        # Need to check to make sure this doesn't break on Linux/Win
+        pix = QPixmap(64, 64)
+        painter = QPainter()
+        painter.begin(pix)
+        painter.setFont(self.font)
+        self.c_width = painter.fontMetrics().width("helloworld"*64) / 640.0
+        painter.end()
 
     def drawArea(self, p):
 
@@ -131,7 +150,6 @@ class FDTextArea(object):
                 block_end_x = self.x_0 + self.c_width * (block.col + len(block.text))
                 block_width = self.c_width * len(block.text)
 
-                p.setPen(self.fgcolor)
                 p.setFont(self.font)
 
                 bgcolor = self.bgcolor
@@ -154,6 +172,8 @@ class FDTextArea(object):
                     if attribs.isBold:
                         p.setFont(self.font_bold)
 
+
                 p.setPen(fgcolor)
                 p.drawText(block_start_x, row_baseline_y, block.text)
+                
 
