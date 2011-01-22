@@ -8,6 +8,7 @@ from arch.shared_mem_types import *
 from properties import *
 from commentlist import *
 from symbollist import *
+from segmentlist import *
 from idis.fsignal import FSignal
 
 class DataStore:
@@ -27,15 +28,13 @@ class DataStore:
         self.memory_info_cache = {}
         self.memory_info_insert_queue = {}
         
-        self.segments_cache = []
-        self.__populateSegments()
-        
         self.memory_info_insert_queue = []
         self.memory_info_insert_queue_ignore = set()
 
         self.symbols = SymbolList(self.conn, "symbols")
         self.comments = CommentList(self.conn, "comments")
         self.cmdlist = CommandList(self)
+        self.segments = SegmentList(self.conn, self)
 
         self.properties = Properties(self.conn)
 
@@ -49,25 +48,10 @@ class DataStore:
         addrs = self.c.execute('''SELECT addr FROM memory_info ORDER BY addr ASC''').fetchall()
         return (i[0] for i in addrs)
 
-    def __getSegments(self):
-        return self.segments_cache
-
-    segments = property(__getSegments)
-    
-    def __populateSegments(self):
-        for i in self.c.execute('''SELECT obj  FROM segments'''):
-            self.segments_cache.append(loads(zlib.decompress(i[0])))
-
-    def addSegment(self, segment):
-        self.segments_cache.append(segment)
-        dbstr = sqlite3.Binary(zlib.compress(dumps(segment)))
-        self.c.execute('''INSERT INTO segments (base_addr, obj) VALUES (?,?)''',
-              (segment.base_addr,dbstr))
-
-        self.layoutChanged()
 
     def readBytes(self, addr, length = 1):
-        for i in self.segments_cache:
+        # FIXME, use findsegment method on SegmentList
+        for i in self.segments.segments_cache:
             try:
                 return i.readBytes(addr, length)
             except IOError:

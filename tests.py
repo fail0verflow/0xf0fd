@@ -1,8 +1,8 @@
 #!/usr/bin/python
 
 import unittest
-from idis.datastore import DataStore
-from idis.dbtypes import Segment, CommentPosition
+from idis.datastore import DataStore, Segment
+from idis.dbtypes import CommentPosition
 from idis.tools import *
 
 class basicSectionTestCase(unittest.TestCase):
@@ -16,7 +16,7 @@ class basicSectionTestCase(unittest.TestCase):
     def test_inBasicDS(self):
         ds = DataStore(":memory:")
         seg = Segment([0,1,2,3,4,5,6,7], 0x0)
-        ds.addSegment(seg)
+        ds.segments.addSegment(seg)
         
         
         self.assertEqual(False, -1 in ds)
@@ -33,7 +33,7 @@ class basicSectionTestCase(unittest.TestCase):
     def test_inBasicDS(self):
         ds = DataStore(":memory:")
         seg = Segment([0,1,2,3,4,5,6,7], 0x0)
-        ds.addSegment(seg)
+        ds.segments.addSegment(seg)
         
         def fakeCallable():
             ds[-1]
@@ -50,7 +50,7 @@ class basicSectionTestCase(unittest.TestCase):
     def testUndefine(self):
         ds = DataStore(":memory:")
         seg = Segment([0,1,2,3,4,5,6,7], 0x0)
-        ds.addSegment(seg)
+        ds.segments.addSegment(seg)
         
         undefine(ds, 0)
    
@@ -64,7 +64,7 @@ class basicSectionTestCase(unittest.TestCase):
         ds.layoutChanged.connect(mockChangeHDLR)
 
         seg = Segment([0,1,2,3,4,5,6,7], 0x0)
-        ds.addSegment(seg)
+        ds.segments.addSegment(seg)
         
         self.assertEqual(fired[0], True)
 

@@ -40,27 +40,6 @@ class SUD(object):
         instance.__dict__[self.name] = value
         instance.push_changes()
 
-
-
-class Segment(object):
-    def __init__(self, data, base_addr):
-        self.__data = data
-        self.__base_addr = base_addr
-
-
-    def __getlength(self):
-        return len(self.__data)
-    length = property(__getlength)
-    
-    def __getbaseaddr(self):
-        return self.__base_addr
-    base_addr = property(__getbaseaddr)
-    
-    def readBytes(self, start, length = 1):
-        if (start < self.__base_addr or start >= self.__base_addr + self.__getlength()):
-            raise IOError, "not in segment"
-        return self.__data[start-self.__base_addr:start-self.__base_addr+length]
-
 class Symbol(object):
     TYPE_LOCAL = 0
     TYPE_FNENT = 1
