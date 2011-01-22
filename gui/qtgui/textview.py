@@ -75,9 +75,13 @@ class FDTextArea(object):
         
         try:
             row = self.row_map[line]
+
+        except KeyError:
+            return None, None, None
+
+        try:
             block = [i for i in row if i.col <= char and (i.col + len(i.text)) > char][0]
             tag = block.tag
-
         except IndexError:
             tag = None
 

@@ -55,6 +55,10 @@ class DisassemblyGraphicsView(QtGui.QWidget):
 
     def getClickAddr(self, x, y):
         lineIndex, char, tag = self.atv.mapCoords(x, y)
+        
+        if lineIndex == None:
+            return None
+
         return self.line_addr_map[lineIndex]
         
         

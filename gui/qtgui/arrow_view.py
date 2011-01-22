@@ -139,6 +139,11 @@ class FDArrowView(object):
         return ((a.dst - a.src) > 0) == ((b.dst - b.src) > 0)
 
     def render(self, p, addr_line_map):
+        if not addr_line_map:
+            return
+        if not self.arrows_addrs:
+            return
+
         # Select only those refs that are completely onscreen
         arrows = [ Arrow(src, dst)
                     for src, dst in self.arrows_addrs
