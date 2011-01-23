@@ -12,7 +12,7 @@ from segmentlist import *
 from idis.fsignal import FSignal
 
 class DataStore:
-    def __init__(self, filename):
+    def __init__(self, filename_db):
         self.updates = 0
         self.inserts = 0
         self.deletes = 0
@@ -20,8 +20,13 @@ class DataStore:
         self.meminfo_misses = 0
         self.meminfo_fetches = 0
         self.meminfo_failures = 0
-        
-        self.conn = sqlite3.connect(filename)
+       
+        # Allow supplying a SQLITE db for testing
+        if type(filename_db) == str:
+            self.conn = sqlite3.connect(filename_db)
+        else:
+            self.conn = filename_db
+
         self.c = self.conn.cursor()
         self.createTables()
 
@@ -40,7 +45,18 @@ class DataStore:
 
         self.layoutChanged = FSignal()
 
-        self.db_version = self.properties.get("f0fd.db_version", 1)
+        # TODO - bump this every time we break the DB [may need exponential notation]
+        self.__my_db_version = 2
+        try:
+            self.db_version = self.properties.get("f0fd.db_version")
+        except:
+            # New DB - set the database verison
+            self.properties.set("f0fd.db_version", self.__my_db_version)
+            self.db_version = self.__my_db_version
+
+        if self.db_version != self.__my_db_version:
+            raise IOError("Could not load database, different DB version")
+
 
     def addrs(self):
         self.flushInsertQueue()
@@ -49,11 +65,17 @@ class DataStore:
         return (i[0] for i in addrs)
 
 
-    def readBytes(self, addr, length = 1):
+    def readBytes(self, ident, length = 1):
         # FIXME, use findsegment method on SegmentList
         for i in self.segments.segments_cache:
+            # try to map the ident to an internal address for the read
             try:
-                return i.readBytes(addr, length)
+                mapped_addr = i.mapIn(ident)
+            except ValueError:
+                continue 
+            
+            try:
+                return i.readBytes(mapped_addr, length)
             except IOError:
                 pass
         raise IOError, "no segment could handle the requested read"
@@ -67,11 +89,6 @@ class DataStore:
                  typeclass  VARCHAR(100),
                  typename   VARCHAR(100),
                  obj        BLOB )''')
-
-        self.c.execute('''
-            CREATE TABLE IF NOT EXISTS segments
-                (base_addr INTEGER CONSTRAINT base_addr_pk PRIMARY KEY,
-                obj BLOB)''')
 
         self.c.execute('''
             CREATE TABLE IF NOT EXISTS symbols

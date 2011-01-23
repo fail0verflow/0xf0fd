@@ -182,7 +182,12 @@ class DisassemblyGraphicsView(QtGui.QWidget):
             # Draw addresses
             for indiv_line in xrange(lines_needed):
                 self.line_addr_map[indiv_line + i] = line_memaddr
-                self.atv.addText(indiv_line + i, self.addrX, "%08x:" % line_memaddr, self.getStyle(STYLE_HEXADDR))
+                line_seg = self.ds.segments.findSegment(line_memaddr)
+                line_segaddr = line_seg.mapIn(line_memaddr)
+                line_segname = line_seg.name + ":" if line_seg.name else ""
+                self.atv.addText(indiv_line + i, self.addrX, 
+                    "%s%08x:" % (line_segname, line_segaddr), 
+                    self.getStyle(STYLE_HEXADDR))
             
            
             # Draw opcode

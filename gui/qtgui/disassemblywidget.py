@@ -9,16 +9,25 @@ class SegmentLineMapper(object):
         self.ds = ds
         
     def getLineCount(self):
-        return sum([i.length for i in self.ds.segments])
-        
-    def map(self, addr):
+        return sum([i.size for i in self.ds.segments])
+   
+    def mapIdentToLine(self, ident):
         line = 0
-        
         for i in self.ds.segments:
-            if addr >= i.base_addr and addr < (i.base_addr + i.length):
-                return line + addr - i.base_addr
-            line += i.length
+            try:
+                int_addr = i.mapIn(ident)
+            except:
+                line += i.size
+                continue
             
+            return line + int_addr - i.start_addr
+
+    def mapLineToIdent(self, line):
+        for i in self.ds.segments:
+            if line < i.size:
+                return i.mapOut(line + i.start_addr)
+
+            line -= i.size
         raise ValueError, "Address could not be mapped"
         
 class DisassemblyWidget(QtGui.QAbstractScrollArea):
@@ -45,7 +54,7 @@ class DisassemblyWidget(QtGui.QAbstractScrollArea):
     def reconfigureScrollBars(self):
         self.vscroll = self.verticalScrollBar()
         self.vscroll.setMinimum(0)
-        self.vscroll.setMaximum(self.sm.getLineCount())
+        self.vscroll.setMaximum(self.sm.getLineCount()-1)
 
     def keyPressEvent(self, evt):
         reserved_keys = []
@@ -79,20 +88,27 @@ class DisassemblyWidget(QtGui.QAbstractScrollArea):
     def update(self):
         self.view.update()
 
-    @QtCore.Slot(int)
-    def gotoAddress(self, val, top=None):
+    # Hack to work around Pyside forcing longs->ints
+    @QtCore.Slot(tuple)
+    def gotoIdentSL(self, tup):
+        self.gotoIdent(tup[0])
+
+    def gotoIdent(self, val, top=None):
         if top == None:
             top = val
+
         self.view.setTopAddr(top)
         self.view.setSelAddr(val)
-        self.vscroll.setValue(top)
+        self.vscroll.setValue(self.sm.mapIdentToLine(top))
 
 
     def mousePressEvent(self, evt):
         self.view.setSelAddr(self.view.getClickAddr(evt.x(), evt.y()))
         
     def scrollEvent(self, value):
-        seek_addr = self.ds.findStartForAddress(value)
+        mapped_addr = self.sm.mapLineToIdent(value)
+        seek_addr = self.ds.findStartForAddress(mapped_addr)
+
         assert seek_addr != None
         self.view.setTopAddr(seek_addr)
         

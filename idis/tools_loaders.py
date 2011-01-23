@@ -1,8 +1,9 @@
 from dbtypes import *
-from datastore import SegmentList, Segment
+from datastore import SegmentList
 from arch.shared_mem_types import *
-    
-def addBinary(ds, file, base_addr, start_offset, length):
+
+# All addrs here are non-ident addresses
+def addBinary(ds, file, base_addr, start_offset, length, name=""):
     # Load the file
     file_data = [ord(i) for i in open(file).read()]
 
@@ -13,8 +14,7 @@ def addBinary(ds, file, base_addr, start_offset, length):
         end_offset = start_offset + length
         dis_len = length
 
-    seg = Segment(file_data[start_offset:end_offset], base_addr)
-    ds.segments.addSegment(seg)
+    ds.segments.addSegment(base_addr, end_offset - start_offset, name, file_data[start_offset:end_offset])
 
 def parseIhexLine(line):
     if line[0] != ':':

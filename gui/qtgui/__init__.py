@@ -89,7 +89,7 @@ class MainWindow(QtGui.QMainWindow):
         symbolWidget = SymbolWidget(self, self.datastore)
         
 
-        symbolWidget.widget.symbolSelected.connect(self.disassemblyWidget.gotoAddress)
+        symbolWidget.widget.symbolSelected.connect(self.disassemblyWidget.gotoIdentSL)
 
         self.setCentralWidget(self.disassemblyWidget)
         self.addDockWidget(QtCore.Qt.LeftDockWidgetArea, symbolWidget)

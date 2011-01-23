@@ -115,7 +115,7 @@ class CommandHandler(object):
             self.ds[newaddr]
             self.memstack.append((self.view.view.getTopAddr(), self.view.view.getSelAddr()))
                 
-            self.view.gotoAddress(newaddr)
+            self.view.gotoIdent(newaddr)
                 
         except KeyError:
             pass
@@ -126,7 +126,7 @@ class CommandHandler(object):
         except IndexError:
             return
         
-        self.view.gotoAddress(sel, top)
+        self.view.gotoIdent(sel, top)
     
     def buildCmdHandlers(self, pairs):
         """ call with a set of pairs such as: 

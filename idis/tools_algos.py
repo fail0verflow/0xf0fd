@@ -1,8 +1,8 @@
 from dbtypes import *
 import arch
 
-# Algorithms that affect more than one memory location in the database
-
+# Clean and rebuild should never need to be called
+# FIXME: Remove after verifying there is no use case
 def clean(ds):
     cleanlist = []
     for i in ds:
@@ -13,6 +13,7 @@ def clean(ds):
     for i in cleanlist:
         del ds[i]
 
+# FIXME: Remove after verifying there is no use case
 def rebuild(ds, arch):
     for i in ds:
         if "insn" in i.cdict:
@@ -26,8 +27,13 @@ def rebuild(ds, arch):
             i.cdict["decoding"] = insn
 
     
+# entry_point is an ident
 def codeFollow(ds, arch_name, entry_point):
     from types import FunctionType
+
+    # MAP entry_point to addr - ensure all dests within same seg?
+    #                         - run dests thru reverse mapper?
+
     q = [entry_point]
     arch_info = arch.machineFactory(ds, arch_name)
 
@@ -79,11 +85,6 @@ def codeFollow(ds, arch_name, entry_point):
         old_mem = ds[pc]
         m = MemoryInfo.createForTypeName(ds, pc, arch_name)
 
-        # Can't serialize this
-        try:
-            del insn.sim
-        except AttributeError: pass
-
         for i in xrange(m.length):
             try:
                 del ds[pc + i]
@@ -92,60 +93,3 @@ def codeFollow(ds, arch_name, entry_point):
 
         ds[pc] = m
         
-def xrefsPass(ds):
-    # Clear all xrefs
-    for i in ds.addrs():
-        ds[i].xrefs = []
-    
-    for i in ds.addrs():
-        if ds[i].typeclass != "code": continue
-        
-        try:
-            insn = ds[i].cdict["decoding"]
-            dests = insn["dests"]
-        except KeyError: continue
-        
-        for j, _ in dests:
-            if j == ds[i].addr + ds[i].length: continue
-            try:
-                ds[j].xrefs.append((i, ds[i].disasm.opcode))
-            except KeyError:
-                pass
-                
-
-def guessLabelName(caller, meminfo):
-    if meminfo.typeclass == "default":
-        return "u%04x" % meminfo.addr
-        
-    elif meminfo.typeclass == "data":
-        if meminfo.cdict["decoding"]["typename"] == "astring":
-            return "a%s" % meminfo.cdict["decoding"]["suggested_label"]
-        else:
-            return "d%04x" % meminfo.addr
-    elif meminfo.typeclass == "code":
-        # HACK HACK HACK
-        if "call" in caller.disasm.opcode:
-            return "sub_%04x" % meminfo.addr
-        else:
-            return "l%04x" % meminfo.addr
-            
-    assert False
-    
-        
-def labelsPass(ds):
-    for i in ds.addrs():
-        try:
-            insn = ds[i].cdict["decoding"]
-            dests = insn["dests"]
-        except KeyError: continue
-        for j, _ in dests:
-            # If the dest is a jmp to the next insn, skip
-            if j == ds[i].addr + ds[i].length: continue
-            
-            try:
-                dest_info = ds[j]
-            except KeyError: continue
-
-            if dest_info.label: continue
-            else: dest_info.label = guessLabelName(ds[j], dest_info)
-            

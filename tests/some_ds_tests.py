@@ -1,11 +1,10 @@
-#!/usr/bin/python
-
 import unittest
-from idis.datastore import DataStore, Segment
+from idis.datastore import DataStore
 from idis.dbtypes import CommentPosition
 from idis.tools import *
 
-class basicSectionTestCase(unittest.TestCase):
+
+class miscTestCases(unittest.TestCase):
 
     def test_notInDS(self):
         ds = DataStore(":memory:")
@@ -15,10 +14,10 @@ class basicSectionTestCase(unittest.TestCase):
 
     def test_inBasicDS(self):
         ds = DataStore(":memory:")
-        seg = Segment([0,1,2,3,4,5,6,7], 0x0)
-        ds.segments.addSegment(seg)
+        data = [0,1,2,3,4,5,6,7]
+        ds.segments.addSegment(0x0, len(data), "ROM", data)
         
-        
+        # These are IDENT based addresses
         self.assertEqual(False, -1 in ds)
         self.assertEqual(True, 0 in ds)
         self.assertEqual(True, 1 in ds)
@@ -30,11 +29,12 @@ class basicSectionTestCase(unittest.TestCase):
         self.assertEqual(True, 7 in ds)
         self.assertEqual(False, 8 in ds)
 
-    def test_inBasicDS(self):
+    def test_inBasicDS2(self):
         ds = DataStore(":memory:")
-        seg = Segment([0,1,2,3,4,5,6,7], 0x0)
-        ds.segments.addSegment(seg)
         
+        data = [0,1,2,3,4,5,6,7]
+        ds.segments.addSegment(0x0, len(data), "ROM", data)
+
         def fakeCallable():
             ds[-1]
         self.assertRaises(KeyError, fakeCallable)
@@ -45,28 +45,37 @@ class basicSectionTestCase(unittest.TestCase):
         def fakeCallable():
             ds[8]
         self.assertRaises(KeyError, fakeCallable)
+    
+    def test_inBasicDS3(self):
+        ds = DataStore(":memory:")
         
+        data = [0,1,2,3,4,5,6,7]
+        data2 = map(lambda x: x+10, data)
+
+        ds.segments.addSegment(0x00, len(data), "ROM", data)
+        ds.segments.addSegment(0x80, len(data), "ROM", data2)
+
+        # TODO: FIX THIS HACK
+        it = ds.segments.__iter__()
+        it.next()
+        addr = it.next().mapOut(0x80)
+
+        ds[0]
+        ds[1]
+       
+        # try second segment
+        ds[addr]
+        ds[addr+1]
 
     def testUndefine(self):
         ds = DataStore(":memory:")
-        seg = Segment([0,1,2,3,4,5,6,7], 0x0)
-        ds.segments.addSegment(seg)
         
+        data = [0,1,2,3,4,5,6,7]
+        ds.segments.addSegment(0x0, len(data), "ROM", data)
+
         undefine(ds, 0)
    
-    # Verify that the layoutChanged signal is emitted
-    def testAddLayoutChanged(self):
-        fired = [False]
-        def mockChangeHDLR():
-            fired[0] = True
-
-        ds = DataStore(":memory:")
-        ds.layoutChanged.connect(mockChangeHDLR)
-
-        seg = Segment([0,1,2,3,4,5,6,7], 0x0)
-        ds.segments.addSegment(seg)
-        
-        self.assertEqual(fired[0], True)
+ 
 
     
     def testCodeFolow(self):
@@ -84,5 +93,4 @@ class basicSectionTestCase(unittest.TestCase):
         self.assertEqual(ds.symbols.getSymbol(0x0), "hello")
         self.assertEqual(ds.comments.getCommentText(0x0, CommentPosition.POSITION_RIGHT), "blah")
 
-if __name__ == '__main__':
-    unittest.main()
+suite = unittest.TestLoader().loadTestsFromTestCase(miscTestCases)

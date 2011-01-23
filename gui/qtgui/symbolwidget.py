@@ -67,8 +67,11 @@ class SymbolModel(QtCore.QAbstractItemModel):
 
 
 class SymbolTableView(QtGui.QTableView):
-
-    symbolSelected = QtCore.Signal(long)
+    
+    # HACK: PYSide forces longs to ints which breaks
+    # on 32 bit machines. box it up in a tuple for safe
+    # transport
+    symbolSelected = QtCore.Signal(tuple)
 
     def __init__(self, parent_win, ds):
         super(SymbolTableView, self).__init__()
@@ -104,7 +107,7 @@ class SymbolTableView(QtGui.QTableView):
             row = indicies[0].row()
             addr, name = self.datastore.symbols.listInterface(self.model.order, self.model.order_dir, row)
         
-            self.symbolSelected.emit(long(addr))
+            self.symbolSelected.emit((addr, ))
 
 
 class SymbolWidget(QtGui.QDockWidget):
