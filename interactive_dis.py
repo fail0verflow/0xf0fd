@@ -4,19 +4,20 @@
 import sys
 gui_instance = None
 
+
 def dbghook(type, value, tb):
-    import traceback, pdb
+    import traceback
+    import pdb
 
     if gui_instance:
         gui_instance.except_shutdown()
-    
+
     traceback.print_exception(type, value, tb)
 
     print
     pdb.pm()
 #sys.excepthook = dbghook
 ############### END PM HACK ######################
-
 
 
 import traceback
@@ -28,6 +29,7 @@ gui_instance = None
 
 # HACK - differentiate gui types
 DEFAULT_GUI_NAME = "qt"
+
 
 def getGuiClass(gui_args):
     if gui_args:
@@ -44,23 +46,24 @@ def getGuiClass(gui_args):
         }
 
     if not gui_name in guis:
-        print "Invalid gui name %s. Valid names are: %s" % (gui_name, " ".join(guis.keys()))
+        print "Invalid gui name %s. Valid names are: %s" % (
+            gui_name, " ".join(guis.keys()))
         return None
 
     import_name, gui_clsname = guis[gui_name]
     gui = __import__(import_name)
     return eval(gui_clsname)
 
+
 # Handle args with optionparser
 def main(args):
     try:
         gui_index = args.index("-g")
-        gui_args = args[gui_index:gui_index+2]
-        args = args[:gui_index] + args[gui_index+2:]
+        gui_args = args[gui_index:gui_index + 2]
+        args = args[:gui_index] + args[gui_index + 2:]
 
     except ValueError:
         gui_args = []
-
 
     gui_class = getGuiClass(gui_args)
     if not gui_class:
@@ -71,11 +74,10 @@ def main(args):
     global gui_instance
     gui_instance = gui_class()
 
-
     # Run the gui
     gui_instance.startup()
     gui_instance.mainloop(filenames)
     gui_instance.shutdown()
-        
+
 if __name__ == '__main__':
     main(sys.argv[1:])

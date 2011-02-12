@@ -2,6 +2,7 @@ from dbtypes import *
 from datastore import SegmentList
 from arch.shared_mem_types import *
 
+
 # All addrs here are non-ident addresses
 def addBinary(ds, file, base_addr, start_offset, length, name=""):
     # Load the file
@@ -14,7 +15,9 @@ def addBinary(ds, file, base_addr, start_offset, length, name=""):
         end_offset = start_offset + length
         dis_len = length
 
-    ds.segments.addSegment(base_addr, end_offset - start_offset, name, file_data[start_offset:end_offset])
+    ds.segments.addSegment(base_addr, end_offset - start_offset,
+        name, file_data[start_offset:end_offset])
+
 
 def parseIhexLine(line):
     if line[0] != ':':
@@ -24,20 +27,23 @@ def parseIhexLine(line):
     addr = int(line[3:7], 16)
     rtype = int(line[7:9], 16)
     data = line[9:9 + 2 * bc]
-    data = [int(data[i : i+2], 16) for i in xrange(0,len(data),2)] 
+    data = [int(data[i:i + 2], 16) for i in xrange(0, len(data), 2)]
     ck = int(line[9 + 2 * bc: 9 + 2 * bc + 2], 16)
 
     if bc != len(data):
         print "data len fail!"
         return
 
-    calcck = (0x100 - (sum([bc, addr & 0xFF, addr >> 8, rtype] + data) & 0xFF)) & 0xFF
+    calcck = (0x100 -
+        (sum([bc, addr & 0xFF, addr >> 8, rtype] + data) & 0xFF)) & 0xFF
+
     if calcck != ck:
         print data
         print "Checksum Fail, %02x = %02x!" % (calcck, ck)
         return
 
     return rtype, addr, data
+
 
 def addIHex(ds, file):
     lines = open(file).readlines()
@@ -48,18 +54,18 @@ def addIHex(ds, file):
         if not record:
             print "Error parsing line %s" % i
         recs.append(record)
-    
-    addrs = [(addr, addr+len(data)) for rtype, addr, data in recs if rtype == 0x0]
+
+    addrs = [(addr, addr + len(data))
+        for rtype, addr, data in recs if rtype == 0x0]
+
     dmin = min([i[0] for i in addrs])
     dmax = max([i[1] for i in addrs])
-    
-    
+
     # build data array
     data = [0x0] * (dmax - dmin + 1)
     for rtype, addr, ldata in recs:
         if (rtype == 0x0):
             for offs, j in enumerate(ldata):
                 data[offs + addr - dmin] = j
-    
-    ds.segments.addSegment(dmin, dmax-dmin, "CODE", data)
 
+    ds.segments.addSegment(dmin, dmax - dmin, "CODE", data)

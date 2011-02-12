@@ -1,5 +1,6 @@
 import re
 
+
 class PreferencesStore(object):
     @staticmethod
     def loadKVpair(filename):
@@ -10,15 +11,20 @@ class PreferencesStore(object):
         and return a dict"""
 
         res = {}
-        data = [(lineno, i, [j.strip() for j in i.split('=',1)]) for lineno,i in enumerate(open(filename).readlines()) if i.strip()]
+        data = [
+            (lineno, i, [j.strip() for j in i.split('=', 1)])
+            for lineno, i in enumerate(open(filename).readlines())
+            if i.strip()]
+
         str_matcher = re.compile("\"([^\"]*)\"")
         int_matcher = re.compile("[0-9]+")
         for lineno, line, key_value in data:
             try:
                 key, value = key_value
             except ValueError:
-                raise ValueError, "Could not parse line %d: %s" % (lineno + 1, line.strip())
-    
+                raise ValueError("Could not parse line %d: %s" %
+                    (lineno + 1, line.strip()))
+
             strmatch = str_matcher.match(value)
             if strmatch:
                 res[key] = strmatch.group(1)
@@ -28,7 +34,9 @@ class PreferencesStore(object):
                 res[key] = int(value)
                 continue
 
-            raise ValueError, "Could not parse value for line: %d: %s" %  (lineno + 1, line.strip())
+            raise ValueError("Could not parse value for line: %d: %s" %
+                (lineno + 1, line.strip()))
+
         return res
 
     @staticmethod
@@ -42,7 +50,7 @@ class PreferencesStore(object):
         self.prefs = prefs
 
     def set(self, key, value):
-        if type(value) not in [str,int,long]:
+        if type(value) not in [str, int, long]:
             raise ValueError
 
         self.prefs[key] = value
@@ -55,8 +63,8 @@ class PreferencesStore(object):
 
     def save(self, filename):
         f = open(filename, "w")
-        for k,v in self.prefs.iteritems():
+        for k, v in self.prefs.iteritems():
             if type(v) == str:
-                f.write("%s = \"%s\"\n" % (k,v))
+                f.write("%s = \"%s\"\n" % (k, v))
             else:
-                f.write("%s = %d\n" % (k,v))
+                f.write("%s = %d\n" % (k, v))
