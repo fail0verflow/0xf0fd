@@ -122,7 +122,7 @@ class MemoryInfo(object):
     # Currently two valid values ["code", "data"]
     @staticmethod
     def __validate_typeclass(value):
-        return value in ["code", "data", "default"]
+        return value in ["code", "data"]
 
     def __get_typeclass(self):
         return self.__typeclass

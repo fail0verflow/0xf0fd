@@ -181,15 +181,15 @@ class DataStore:
         except IOError:
             return False
 
-    def createDefault(self, addr):
+    def createDefault(self, ident):
         # Only return a defaults object if we're within a valid memory range
         try:
-            self.readBytes(addr, 1)
-            mi = DefaultMock(self, addr)
-            self[addr] = mi
+            self.readBytes(ident, 1)
+            mi = DefaultMock(self, ident)
+            self.memory_info_cache[ident] = mi
             return mi
         except IOError:
-            raise KeyError
+            return None
 
     # find the instruction that includes this address
     def findStartForAddress(self, seekaddr):
@@ -213,14 +213,26 @@ class DataStore:
 
         return row[0]
 
-    def __getitem__(self, addr):
+    LKUP_OK = 0     # Found item @ ident
+    LKUP_NONE = 1   # No item found @ ident
+    LKUP_OVR = 2    # passed ident overlapped another
+
+    def __getitem__(self, ident):
+        status, value = self.lookup(ident)
+        if status == self.LKUP_OK:
+            return value
+
+        raise KeyError
+
+    def lookup(self, addr):
         self.meminfo_fetches += 1
         # See if the object is already around
         try:
             obj = self.memory_info_cache[addr]
-            if obj == None:
-                raise KeyError
-            return obj
+
+            # We should never have a "none" result in the cache
+            assert (obj != None)
+            return self.LKUP_OK, obj
 
         except KeyError:
             self.flushInsertQueue()
@@ -234,12 +246,21 @@ class DataStore:
 
             if not row:
                 self.meminfo_failures += 1
-                return self.createDefault(addr)
+                result = self.createDefault(addr)
+                if result:
+                    return self.LKUP_OK, result
+                return self.LKUP_NONE, None
 
+            # If the row doesn't equal the address, then
+            # either we found a memory object that finishes
+            # before this address, or one that overlaps this address
             if row[0] != addr:
                 if row[0] + row[1] > addr:
-                    raise KeyError
-                return self.createDefault(addr)
+                    return self.LKUP_OVR, None
+                result = self.createDefault(addr)
+                if result:
+                    return self.LKUP_OK, result
+                return self.LKUP_NONE, None
 
             self.meminfo_misses += 1
 
@@ -259,7 +280,7 @@ class DataStore:
 
             self.memory_info_cache[addr] = obj
             assert obj.addr == addr
-            return obj
+            return self.LKUP_OK, obj
 
     def __setitem__(self, addr, v):
         v.ds = self
@@ -283,8 +304,7 @@ class DataStore:
         self.memory_info_cache[addr] = v
 
         is_default = v.typeclass == "default"
-        if is_default:
-            return
+        assert not is_default
 
         self.__queue_insert(addr, v)
 

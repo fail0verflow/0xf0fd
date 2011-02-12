@@ -74,6 +74,9 @@ class miscTestCases(unittest.TestCase):
         data = [0, 1, 2, 3, 4, 5, 6, 7]
         ds.segments.addSegment(0x0, len(data), "ROM", data)
 
+        # TODO: we need this line to actually create a default type
+        x = ds[0]
+
         undefine(ds, 0)
 
     def test_CodeFolow(self):
