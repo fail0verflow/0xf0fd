@@ -62,7 +62,7 @@ class DefaultMock(object):
         def __init__(self, value):
             self.value = value
 
-        def render(self, ds):
+        def render(self, ds, segment):
             return "0x%02x" % self.value, 0
 
     class DisasmMock(object):

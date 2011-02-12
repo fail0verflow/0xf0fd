@@ -42,22 +42,25 @@ def decodeAs(ds, dec_type, memaddr):
     ds[memaddr] = m
 
 
-
-def follow(ds, addr):
+# Takes an ident and returns the logical "following" ident
+def follow(ds, ident):
     try:
-        dests = ds[addr].disasm.dests()
-        
+        d = ds[ident]
+        dests = d.disasm.dests() 
     except KeyError: return None
 
+    segment = ds.segments.findSegment(ident)
+    
     for j, _ in dests:
-        if j == addr + ds[addr].length: continue
+        if j == segment.mapIn(d.addr) + d.length: continue
         
         try:
-            dest_info = ds[j]
+            print segment.mapOut(j)
+            dest_info = ds[segment.mapOut(j)]
         except KeyError: pass
 
 
-        return j
+        return segment.mapOut(j)
 
     return None
 

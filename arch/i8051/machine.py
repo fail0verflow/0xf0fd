@@ -61,10 +61,13 @@ class i8051Machine(object):
 
     def __init__(self, datastore):
         self.datastore = datastore
-        
+    
+    # All refs in returned disassembly are segment-rel!
     def disassemble(self, id, saved_params=None):
         bytes = self.datastore.readBytes(id, 5)
-        return i8051Adaptor(id, bytes)
+
+        reladdr = self.datastore.segments.findSegment(id).mapIn(id)
+        return i8051Adaptor(reladdr, bytes)
 
 machines = [i8051Machine]   
 

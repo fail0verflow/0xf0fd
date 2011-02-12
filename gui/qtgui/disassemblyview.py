@@ -23,10 +23,10 @@ class DisassemblyGraphicsView(QtGui.QWidget):
 
         
         self.addrX = 0
-        self.labelX = 12
-        self.disasmX = 14
-        self.firstOpcodeX = 25
-        self.commentX = 50
+        self.labelX = 18
+        self.disasmX = 20
+        self.firstOpcodeX = 31
+        self.commentX = 56
        
         self.sel_color = QtGui.QColor(190, 190, 255)
         
@@ -115,8 +115,13 @@ class DisassemblyGraphicsView(QtGui.QWidget):
             disasm_start += 2
             label_start = 1
 
+
+
         try:
-            if data.addr + data.length not in [i for i, _ in data.disasm.dests()]:
+            segment = self.ds.segments.findSegment(data.addr)
+            dests = [ (segment.mapOut(i), i, j) for i, j in data.disasm.dests() ] 
+        
+            if data.addr + data.length not in [i for i, _, _ in dests]:
                 lines_needed += 2
                 divider_start = disasm_start+1
 
@@ -134,6 +139,9 @@ class DisassemblyGraphicsView(QtGui.QWidget):
 
         self.line_addr_map = {}
         self.addr_line_map = {}
+
+        
+
         
         # Calculate maximum number of lines on the screen
         nlines = self.atv.nlines
@@ -159,7 +167,13 @@ class DisassemblyGraphicsView(QtGui.QWidget):
                 line_memaddr += 1
                 break
                 continue
-                
+           
+            segment = self.ds.segments.findSegment(line_data.addr)
+            try:
+                dests = [ (segment.mapOut(i_), i_, j) for i_, j in line_data.disasm.dests() ] 
+            except AttributeError:
+                dests = []
+
             #
             # layout is:
             #   0001
@@ -189,7 +203,6 @@ class DisassemblyGraphicsView(QtGui.QWidget):
                     "%s%08x:" % (line_segname, line_segaddr), 
                     self.getStyle(STYLE_HEXADDR))
             
-           
             # Draw opcode
             self.atv.addText(i+disasm_start, self.disasmX, "%s" % opcode, self.getStyle(STYLE_OPCODE))
             
@@ -198,9 +211,9 @@ class DisassemblyGraphicsView(QtGui.QWidget):
            
             # Add addr to disasm
             try:
-                for arrow in [ (line_data.addr, dest) 
-                            for dest, desttype in line_data.disasm.dests()
-                            if dest != line_data.addr + line_data.length and desttype == REL_JUMP]:
+                for arrow in [ (line_data.addr, dest_ident) 
+                            for dest_ident, dest_addr, desttype in dests
+                            if dest_ident != line_data.addr + line_data.length and desttype == REL_JUMP]:
                     self.arv.addArrow(arrow[0], arrow[1])
 
             except AttributeError:
@@ -211,8 +224,8 @@ class DisassemblyGraphicsView(QtGui.QWidget):
             for opcode_num in xrange(len(line_data.disasm.operands)):
                 operand = line_data.disasm.operands[opcode_num]
                 last_operand = opcode_num == len(line_data.disasm.operands) - 1
-                
-                text, opc_type = operand.render(self.ds)
+               
+                text, opc_type = operand.render(self.ds, segment)
                 
                 opcode_text = text
                 self.atv.addText(i+disasm_start, opcodeX, opcode_text, self.getStyle(opc_type), opcode_text)
@@ -279,7 +292,7 @@ class DisassemblyGraphicsView(QtGui.QWidget):
             self.drawWidget(p)
         finally:
             p.end()
-
+        
         if time_paintEvents:
             end = time.time()
             print end-start

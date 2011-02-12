@@ -61,7 +61,5 @@ def addIHex(ds, file):
             for offs, j in enumerate(ldata):
                 data[offs + addr - dmin] = j
     
-    seg = Segment(data, dmin)
-    ds.segments.addSegment(seg)
+    ds.segments.addSegment(dmin, dmax-dmin, "CODE", data)
 
-    createDefaults(ds, dmin, dmin + len(data))

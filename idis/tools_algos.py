@@ -57,6 +57,8 @@ def codeFollow(ds, arch_name, entry_point):
         # TODO: HACK: 6 repeated 0xFF's = uninited mem
         if all([i==0xFF for i in fetched_mem]):
             continue
+       
+        segment = ds.segments.findSegment(pc)
         
         try:
             insn = arch_info.disassemble(pc, None)
@@ -77,12 +79,11 @@ def codeFollow(ds, arch_name, entry_point):
         
         # HACK - Add destinations, use IR
         try:
-            q.extend([i for i, _ in insn.dests()])
+            q.extend([segment.mapOut(i) for i, _ in insn.dests()])
         except AttributeError:
             q.extend([insn.length()+pc])
 
 
-        old_mem = ds[pc]
         m = MemoryInfo.createForTypeName(ds, pc, arch_name)
 
         for i in xrange(m.length):
