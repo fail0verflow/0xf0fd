@@ -1,5 +1,3 @@
-
-
 import idis.tools
 import idis.tools_algos
 import arch
@@ -11,7 +9,9 @@ from inspect import InspectWindow
 from PySide import QtCore
 from PySide import QtGui
 
-keyList = dict([(getattr(QtCore.Qt, key), key) for key in dir(QtCore.Qt) if key.startswith('Key')])
+# Build a list of Key_ constants that QT knows
+keyList = dict([(getattr(QtCore.Qt, key), key)
+    for key in dir(QtCore.Qt) if key.startswith('Key')])
 
 
 class AddCommentWindow(QtGui.QDialog):
@@ -26,7 +26,8 @@ class AddCommentWindow(QtGui.QDialog):
 
         okButton = QtGui.QPushButton("OK")
         okButton.setDefault(True)
-        QtCore.QObject.connect(okButton, QtCore.SIGNAL('clicked()'), self.accept)
+        QtCore.QObject.connect(okButton,
+            QtCore.SIGNAL('clicked()'), self.accept)
 
         buttonBox = QtGui.QDialogButtonBox(QtCore.Qt.Vertical)
         buttonBox.addButton(okButton, QtGui.QDialogButtonBox.ActionRole)
@@ -34,7 +35,7 @@ class AddCommentWindow(QtGui.QDialog):
         self.formLayout = QtGui.QFormLayout()
         self.positionLabel = QtGui.QLabel(positionText)
         self.edit = QtGui.QTextEdit(oldcomment)
-        
+
         self.formLayout.addRow("&Position:", self.positionLabel)
         self.formLayout.addRow("&Comment text:", self.edit)
 
@@ -42,19 +43,21 @@ class AddCommentWindow(QtGui.QDialog):
         self.setLayout(self.formLayout)
         self.setWindowModality(QtCore.Qt.ApplicationModal)
 
+
 class AddBinaryPromptWindow(QtGui.QDialog):
     def __init__(self):
         super(AddBinaryPromptWindow, self).__init__()
-        
+
         # Todo - make validator that changes background red for bad values
-        # and disables okButton 
-        
+        # and disables okButton
+
         # TODO: add cancel button
-        
+
         # TODO: remove close and make act like a normal dialog
         okButton = QtGui.QPushButton("OK")
         okButton.setDefault(True)
-        QtCore.QObject.connect(okButton, QtCore.SIGNAL('clicked()'), self.accept)
+        QtCore.QObject.connect(okButton,
+            QtCore.SIGNAL('clicked()'), self.accept)
 
         buttonBox = QtGui.QDialogButtonBox(QtCore.Qt.Vertical)
         buttonBox.addButton(okButton, QtGui.QDialogButtonBox.ActionRole)
@@ -69,7 +72,7 @@ class AddBinaryPromptWindow(QtGui.QDialog):
         self.formLayout.addWidget(buttonBox)
         self.setLayout(self.formLayout)
         self.setWindowModality(QtCore.Qt.ApplicationModal)
-        
+
 
 class CommandHandler(object):
 
@@ -80,31 +83,33 @@ class CommandHandler(object):
         cw.exec_()
         self.ds.cmdlist.push(CommentCommand(ident, pos, cw.edit.toPlainText()))
 
-
     def handleAddBinary(self, addr):
         # FIXME: use command pattern
         filename, filter = QtGui.QFileDialog.getOpenFileName()
         bpw = AddBinaryPromptWindow()
         bpw.exec_()
-        base_addr = int(bpw.baseEdit.text(),0)
-        start_offset = int(bpw.startEdit.text(),0)
-        length = int(bpw.lengthEdit.text(),0)
-        idis.tools_loaders.addBinary(self.ds, filename, base_addr, start_offset, length)
-        
+        base_addr = int(bpw.baseEdit.text(), 0)
+        start_offset = int(bpw.startEdit.text(), 0)
+        length = int(bpw.lengthEdit.text(), 0)
+        idis.tools_loaders.addBinary(self.ds,
+            filename, base_addr, start_offset, length)
+
     def handleAddIHEX(self, addr):
         # FIXME: use command pattern
         filename, filter = QtGui.QFileDialog.getOpenFileName()
         idis.tools_loaders.addIHex(self.ds, filename)
-            
+
     def handleInspect(self, addr):
         info = self.ds[addr]
         iw = InspectWindow(info)
         iw.show()
         self.iws += [iw]
-        
+
     def handleSetLabel(self, addr):
         oldlabel = self.ds[addr].label
-        text, ok = QtGui.QInputDialog.getText(None, "Set Label", "Enter a label for addr %04x" % addr, text=oldlabel)
+        text, ok = QtGui.QInputDialog.getText(None,
+            "Set Label", "Enter a label for addr %04x" % addr, text=oldlabel)
+
         if ok and text != oldlabel:
             self.ds.cmdlist.push(SymbolNameCommand(addr, text))
 
@@ -117,30 +122,30 @@ class CommandHandler(object):
         newaddr = idis.tools.follow(self.ds, addr)
         try:
             self.ds[newaddr]
-            self.memstack.append((self.view.view.getTopAddr(), self.view.view.getSelAddr()))
-                
+            self.memstack.append(
+                (self.view.view.getTopAddr(), self.view.view.getSelAddr()))
+
             self.view.gotoIdent(newaddr)
-                
+
         except KeyError:
             pass
 
     def handleCodeReturn(self, addr):
         try:
-            top,sel = self.memstack.pop()
+            top, sel = self.memstack.pop()
         except IndexError:
             return
-        
+
         self.view.gotoIdent(sel, top)
-    
+
     def buildCmdHandlers(self, pairs):
-        """ call with a set of pairs such as: 
+        """ call with a set of pairs such as:
             [ ( "Semicolon", "AddBinary" ) ] """
 
         self.cmd_handlers = dict([
             (getattr(QtCore.Qt, "Key_%s" % a), getattr(self, "handle%s" % b))
                 for a, b in pairs
             ])
-
 
     def __init__(self, gui, ds, view):
         self.gui = gui
@@ -162,7 +167,7 @@ class CommandHandler(object):
             ]
 
         self.buildCmdHandlers(handlers)
-        
+
     def handleCommand(self, addr, cmd):
         try:
             self.cmd_handlers[cmd](addr)

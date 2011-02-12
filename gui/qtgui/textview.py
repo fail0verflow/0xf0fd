@@ -2,17 +2,19 @@ from PySide.QtCore import *
 from PySide.QtGui import *
 import math
 
+
 class FDTextAttribs(object):
-    def __init__(self, 
-        color=None, 
-        bgcolor=None,
-        isBold = False,
-        isItalic = False,
-            ):
+    def __init__(self,
+            color=None,
+            bgcolor=None,
+            isBold=False,
+            isItalic=False):
+
         self.color = color
         self.bgcolor = bgcolor
         self.isBold = isBold
         self.isItalic = isItalic
+
 
 class FDTextBlock(object):
     def __init__(self, start, text, attribs, tag):
@@ -20,6 +22,7 @@ class FDTextBlock(object):
         self.text = text
         self.attribs = attribs
         self.tag = tag
+
 
 #
 # Textview, rows/cols numbered:
@@ -30,10 +33,11 @@ class FDTextBlock(object):
 # 2  |
 #
 #
-
 class FDTextArea(object):
-    def __init__(self, x,y,width, height, bgcolor=QColor(255,255,255), fgcolor=QColor(0,0,0)):
-        
+    def __init__(self, x, y, width, height,
+            bgcolor=QColor(255, 255, 255),
+            fgcolor=QColor(0, 0, 0)):
+
         self.font_family = "courier"
         self.font = QFont(self.font_family)
         self.font.setFixedPitch(True)
@@ -49,30 +53,28 @@ class FDTextArea(object):
         self.fgcolor = fgcolor
         self.x_0 = x
         self.y_0 = y
-    
+
         self.setupFontParams()
 
         self.resize(width, height)
         self.clear()
-
 
     def mixColors(self, a, b):
         dfw_r = 255 - a.red()
         dfw_g = 255 - a.green()
         dfw_b = 255 - a.blue()
 
-        new_r = max(b.red()-dfw_r, 0)
-        new_b = max(b.blue()-dfw_g, 0)
-        new_g = max(b.green()-dfw_b, 0)
+        new_r = max(b.red() - dfw_r, 0)
+        new_b = max(b.blue() - dfw_g, 0)
+        new_g = max(b.green() - dfw_b, 0)
 
         return QColor(new_r, new_g, new_b)
 
-   
     def mapCoords(self, x, y):
         """ Returns line, character_pos, tag [if present] """
         line = int((y - self.y_0) / self.c_height)
         char = int((x - self.x_0) / self.c_width)
-        
+
         try:
             row = self.row_map[line]
 
@@ -80,7 +82,8 @@ class FDTextArea(object):
             return None, None, None
 
         try:
-            block = [i for i in row if i.col <= char and (i.col + len(i.text)) > char][0]
+            block = [i for i in row
+                     if i.col <= char and (i.col + len(i.text)) > char][0]
             tag = block.tag
         except IndexError:
             tag = None
@@ -92,7 +95,6 @@ class FDTextArea(object):
         self.height = height
 
         self.nlines = math.ceil(self.height / float(self.c_height))
-
 
     def clear(self):
         self.row_map = {}
@@ -107,19 +109,19 @@ class FDTextArea(object):
             row_o = self.row_map[row]
         except KeyError:
             row_o = self.row_map[row] = []
-        
+
         row_o.append(FDTextBlock(col, text, attribs, tag))
 
-        row_o.sort(lambda a,b: cmp(a.col, b.col))
+        row_o.sort(lambda a, b: cmp(a.col, b.col))
 
     def setupFontParams(self):
         metrics = QFontMetricsF(self.font)
 
         self.c_height = metrics.height()
         self.c_baseline = metrics.ascent()
- 
+
         # Ugly hack - QFontMetricsF(font) gives us wrong values
-        #  but since we can only get Integer font metrics on 
+        #  but since we can only get Integer font metrics on
         #  a QPainter, we need to average it from a long string
         #
         # For now, in testing this fixes issues on Mac OS X
@@ -128,11 +130,10 @@ class FDTextArea(object):
         painter = QPainter()
         painter.begin(pix)
         painter.setFont(self.font)
-        self.c_width = painter.fontMetrics().width("helloworld"*64) / 640.0
+        self.c_width = painter.fontMetrics().width("helloworld" * 64) / 640.0
         painter.end()
 
     def drawArea(self, p):
-
         bg_brush = QBrush(self.bgcolor)
 
         geom = QRect(self.x_0, self.y_0, self.width, self.height)
@@ -144,14 +145,18 @@ class FDTextArea(object):
             row_baseline_y = self.y_0 + self.c_height * row + self.c_baseline
 
             try:
-                p.fillRect(self.x_0, row_top_y, self.width, self.c_height, self.row_highlights[row])
+                p.fillRect(self.x_0, row_top_y,
+                           self.width, self.c_height,
+                           self.row_highlights[row])
+
             except KeyError:
                 pass
 
             for block in blocks:
                 attribs = block.attribs
                 block_start_x = self.x_0 + self.c_width * block.col
-                block_end_x = self.x_0 + self.c_width * (block.col + len(block.text))
+                block_end_x = self.x_0 + self.c_width * (
+                    block.col + len(block.text))
                 block_width = self.c_width * len(block.text)
 
                 p.setFont(self.font)
@@ -160,24 +165,22 @@ class FDTextArea(object):
                 fgcolor = self.fgcolor
 
                 if attribs:
-                    bgcolor = attribs.bgcolor if attribs.bgcolor else self.bgcolor
+                    bgcolor = attribs.bgcolor if \
+                        attribs.bgcolor else self.bgcolor
                     fgcolor = attribs.color if attribs.color else self.fgcolor
 
                     try:
-                        
-                        p.fillRect(QRect(block_start_x, row_top_y, 
-                            block_width, self.c_height), self.mixColors(bgcolor, self.row_highlights[row]))
+                        p.fillRect(QRect(block_start_x, row_top_y,
+                            block_width, self.c_height),
+                            self.mixColors(bgcolor, self.row_highlights[row]))
+
                     except KeyError:
                         if bgcolor != self.bgcolor:
-                            p.fillRect(QRect(block_start_x, row_top_y, 
+                            p.fillRect(QRect(block_start_x, row_top_y,
                                 block_width, self.c_height), bgcolor)
 
-                        
                     if attribs.isBold:
                         p.setFont(self.font_bold)
 
-
                 p.setPen(fgcolor)
                 p.drawText(block_start_x, row_baseline_y, block.text)
-                
-

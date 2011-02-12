@@ -10,6 +10,7 @@ from disassemblywidget import DisassemblyWidget
 from symbolwidget import SymbolWidget
 import arch
 
+
 class ArchPromptWindow(QtGui.QWidget):
     def __init__(self, callback):
         super(ArchPromptWindow, self).__init__()
@@ -21,7 +22,7 @@ class ArchPromptWindow(QtGui.QWidget):
 
         hbox = QtGui.QHBoxLayout()
         ob.addLayout(hbox)
-        
+
         controlsBox = QtGui.QVBoxLayout()
         hbox.addLayout(controlsBox)
 
@@ -33,7 +34,9 @@ class ArchPromptWindow(QtGui.QWidget):
         hbox.addWidget(imglabel)
 
         # Add text labels
-        textlabel = QtGui.QLabel("It looks like you're starting a new database!")
+        textlabel = QtGui.QLabel(
+            "It looks like you're starting a new database!")
+
         textlabel2 = QtGui.QLabel("Select an architecture:")
         controlsBox.addWidget(textlabel)
         controlsBox.addWidget(textlabel2)
@@ -56,13 +59,15 @@ class ArchPromptWindow(QtGui.QWidget):
         ob.addLayout(bbox)
 
         self.setLayout(ob)
-        
+
         self.setWindowModality(QtCore.Qt.ApplicationModal)
         self.setWindowFlags(QtCore.Qt.Dialog)
 
     def launchClick(self):
         self.close()
-        self.callback(self.qcb.itemData(self.qcb.currentIndex(), role=QtCore.Qt.UserRole))
+        self.callback(
+            self.qcb.itemData(self.qcb.currentIndex(),
+                role=QtCore.Qt.UserRole))
 
 
 class MainWindow(QtGui.QMainWindow):
@@ -80,16 +85,15 @@ class MainWindow(QtGui.QMainWindow):
 
         self.menuBar().addMenu(self.fileMenu)
         #self.setMenuBar(self.__menuBar)
-    
-    
-        self.resize(800,600)
+
+        self.resize(800, 600)
         self.setWindowTitle(filename)
-        
+
         self.disassemblyWidget = DisassemblyWidget(self, gui, self.datastore)
         symbolWidget = SymbolWidget(self, self.datastore)
-        
 
-        symbolWidget.widget.symbolSelected.connect(self.disassemblyWidget.gotoIdentSL)
+        symbolWidget.widget.symbolSelected.connect(
+            self.disassemblyWidget.gotoIdentSL)
 
         self.setCentralWidget(self.disassemblyWidget)
         self.addDockWidget(QtCore.Qt.LeftDockWidgetArea, symbolWidget)
@@ -98,13 +102,14 @@ class MainWindow(QtGui.QMainWindow):
         self.datastore.cmdlist.rewind(1)
         self.disassemblyWidget.update()
 
+
 class QTGui(object):
     def __init__(self):
         pass
 
     def startup(self):
         pass
-    
+
     def createMainWindow(self):
         mainWin = MainWindow(self, self.filename)
         mainWin.show()
@@ -130,14 +135,16 @@ class QTGui(object):
         self.app = QtGui.QApplication(sys.argv)
 
         if not os.path.exists(self.filename):
-            # File doesn't exist, show arch prompt window and create the datastore
+            # File doesn't exist, show arch
+            # prompt window and create the datastore
             apw = ArchPromptWindow(self.newWithArchCallback)
             apw.show()
         else:
             # File exists, make sure the architecture type is properly set
             self.ds = DataStore(self.filename)
             try:
-                self.global_archname = self.ds.properties.get("f0fd.HACK_arch_name")
+                self.global_archname = \
+                    self.ds.properties.get("f0fd.HACK_arch_name")
                 self.createMainWindow()
 
             except KeyError:
@@ -145,7 +152,6 @@ class QTGui(object):
                 apw.show()
 
         self.app.exec_()
-
 
     def shutdown(self):
         pass
