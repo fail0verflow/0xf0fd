@@ -1,4 +1,4 @@
-from dbtypes import *
+from datastore.dbtypes import *
 from datastore import SegmentList
 from arch.shared_mem_types import *
 

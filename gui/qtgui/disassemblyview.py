@@ -6,7 +6,7 @@ from arch.shared_opcode_types import *
 # TODO: Removeme
 from arch.common.hacks import *
 
-from idis.dbtypes import CommentPosition
+from datastore import CommentPosition
 from textview import FDTextArea, FDTextAttribs
 from arrow_view import FDArrowView
 

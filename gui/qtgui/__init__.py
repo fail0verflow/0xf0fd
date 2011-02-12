@@ -116,7 +116,7 @@ class QTGui(object):
 
     def newWithArchCallback(self, arch):
         self.global_archname = arch
-        self.ds = DataStore(self.filename)
+        self.ds = DataStore(self.filename, arch.getDecoder)
         self.ds.properties.set("f0fd.HACK_arch_name", arch)
         self.createMainWindow()
 
@@ -141,7 +141,7 @@ class QTGui(object):
             apw.show()
         else:
             # File exists, make sure the architecture type is properly set
-            self.ds = DataStore(self.filename)
+            self.ds = DataStore(self.filename, arch.getDecoder)
             try:
                 self.global_archname = \
                     self.ds.properties.get("f0fd.HACK_arch_name")

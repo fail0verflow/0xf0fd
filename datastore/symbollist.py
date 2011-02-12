@@ -1,4 +1,19 @@
-from idis.fsignal import FSignal
+from fsignal_thunk import *
+
+
+class Symbol(object):
+    TYPE_LOCAL = 0
+    TYPE_FNENT = 1
+    TYPE_MULTIUSE = 2
+
+    def __init__(self, datastore, address, name, type=TYPE_LOCAL):
+            self.ds = datastore
+            self.address = address
+            self.name = name
+            self.type = type
+
+    def __str__(self):
+        return self.name
 
 
 class SymbolList(object):

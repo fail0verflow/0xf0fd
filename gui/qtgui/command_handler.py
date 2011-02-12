@@ -3,7 +3,7 @@ import idis.tools_algos
 import arch
 
 from idis.cmd.command import *
-from idis.dbtypes import CommentPosition
+from datastore import CommentPosition
 from inspect import InspectWindow
 
 from PySide import QtCore

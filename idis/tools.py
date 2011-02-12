@@ -1,6 +1,6 @@
 from arch.shared_opcode_types import *
 from arch.shared_mem_types import *
-from dbtypes import *
+from datastore.dbtypes import *
 from tools_algos import *
 from tools_loaders import *
 

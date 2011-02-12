@@ -1,6 +1,7 @@
 import unittest
-from datastore import DataStore
-from idis.dbtypes import CommentPosition
+from datastore import DataStore, CommentPosition
+from arch import getDecoder
+
 from idis.tools import *
 
 
@@ -67,7 +68,7 @@ class miscTestCases(unittest.TestCase):
         ds[addr]
         ds[addr + 1]
 
-    def testUndefine(self):
+    def test_Undefine(self):
         ds = DataStore(":memory:")
 
         data = [0, 1, 2, 3, 4, 5, 6, 7]
@@ -75,13 +76,13 @@ class miscTestCases(unittest.TestCase):
 
         undefine(ds, 0)
 
-    def testCodeFolow(self):
-        ds = DataStore(":memory:")
+    def test_CodeFolow(self):
+        ds = DataStore(":memory:", getDecoder)
         addBinary(ds, "performance/src/8051_flash_trunc.bin", 0, 0, 0x8000)
         codeFollow(ds, "8051", 0)
 
-    def testCodeFollowCheckCommentLabels(self):
-        ds = DataStore(":memory:")
+    def test_CodeFollowCheckCommentLabels(self):
+        ds = DataStore(":memory:", getDecoder)
         addBinary(ds, "performance/src/8051_flash_trunc.bin", 0, 0, 0x8000)
         ds.symbols.setSymbol(0x0, "hello")
         ds.comments.setComment(0x0, "blah", CommentPosition.POSITION_RIGHT)
@@ -90,5 +91,16 @@ class miscTestCases(unittest.TestCase):
         self.assertEqual(ds.symbols.getSymbol(0x0), "hello")
         self.assertEqual(ds.comments.getCommentText(0x0,
             CommentPosition.POSITION_RIGHT), "blah")
+
+    def test_NoDecoderLookupException(self):
+        ds = DataStore(":memory:")
+
+        data = [1, 2, 3, 4]
+        ds.segments.addSegment(0x0, len(data), "ROM", data)
+
+        def _call():
+            m = MemoryInfo.createForTypeName(ds, 0, "fakeTypeName")
+
+        self.assertRaises(NotImplementedError, _call)
 
 suite = unittest.TestLoader().loadTestsFromTestCase(miscTestCases)

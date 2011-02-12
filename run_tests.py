@@ -8,4 +8,6 @@ import tests.some_ds_tests
 alltests = unittest.TestSuite([tests.segment.suite, tests.some_ds_tests.suite])
 
 if __name__ == '__main__':
-    unittest.TextTestRunner(verbosity=2).run(alltests) 
+    r = unittest.TextTestRunner(verbosity=2).run(alltests)
+    if r.failures:
+        exit(1)

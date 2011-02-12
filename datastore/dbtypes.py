@@ -1,6 +1,3 @@
-from arch import getDecoder
-
-
 class CommentPosition:
     POSITION_BEFORE = 0
     POSITION_RIGHT = 1
@@ -24,40 +21,6 @@ class proxy_dict(dict):
         if self.parent:
             self.parent()
         return dict.__delitem__(self, v)
-
-
-# On set force-update parameter
-class SUD(object):
-    def __init__(self, name, validator=None):
-        self.name = name
-        self.validator = validator
-
-    def __get__(self, instance, owner):
-        if self.name not in instance.__dict__:
-            raise AttributeError(self.name)
-        return instance.__dict__[self.name]
-
-    def __set__(self, instance, value):
-        if self.validator:
-            assert self.validator(value)
-
-        instance.__dict__[self.name] = value
-        instance.push_changes()
-
-
-class Symbol(object):
-    TYPE_LOCAL = 0
-    TYPE_FNENT = 1
-    TYPE_MULTIUSE = 2
-
-    def __init__(self, datastore, address, name, type=TYPE_LOCAL):
-            self.ds = datastore
-            self.address = address
-            self.name = name
-            self.type = type
-
-    def __str__(self):
-        return self.name
 
 
 # Temporary mock operand until the type system gets sorted out
@@ -94,9 +57,9 @@ class MemoryInfo(object):
     @staticmethod
     def createForTypeName(ds, addr, typename):
         """ Create an MemoryInfo object, given only the desired typename"""
-        decoder = getDecoder(ds, typename)
+        decoder = ds.decoder_lookup(ds, typename)
         decoded = decoder.disassemble(addr, saved_params=None)
-        m = MemoryInfo("key!!",
+        m = MemoryInfo(
                 ds=ds,
                 addr=addr,
                 length=decoded.length(),
@@ -115,12 +78,12 @@ class MemoryInfo(object):
         except KeyError:
             saved_params = {}
 
-        decoder = getDecoder(ds, typename)
+        decoder = ds.decoder_lookup(ds, typename)
 
         decoded = decoder.disassemble(addr, saved_params=saved_params)
         assert decoded.length() == length
 
-        m = MemoryInfo("key!!",
+        m = MemoryInfo(
                 ds=ds,
                 addr=addr,
                 length=decoded.length(),
@@ -131,30 +94,51 @@ class MemoryInfo(object):
 
         return m
 
+    # Disable serialization
     def __getstate__(self):
-        dont_save = ["xrefs", "ds_link"]
-        return dict([i for i in self.__dict__.items()
-            if i[0] not in dont_save])
+        raise NotImplementedError()
 
+    # Disable serialization
     def __setstate__(self, d):
-        self.__dict__ = d
-        self.__cdict.parent = self.push_changes
-
-        # mutable, not serialized
-        self.xrefs = []
+        raise NotImplementedError()
 
     # Addr is read-only, since its a primary key.
     # Delete and recreate to change
     def __get_addr(self):
-        return self._addr
+        return self.__addr
     addr = property(__get_addr)
 
-    # length of this memory opcode
-    length = SUD("_length")
+    # Read-only view of length
+    def __get_length(self):
+        return self.__length
+    length = property(__get_length)
 
     # Text form of the decoding [TODO: rename?]
-    disasm = SUD("_disasm")
+    def __get_disasm(self):
+        return self.__disasm
+    disasm = property(__get_disasm)
 
+    # General type of the data
+    # Currently two valid values ["code", "data"]
+    @staticmethod
+    def __validate_typeclass(value):
+        return value in ["code", "data", "default"]
+
+    def __get_typeclass(self):
+        return self.__typeclass
+    typeclass = property(__get_typeclass)
+
+    # Actual type of the data
+    def __get_typename(self):
+        return self.__typename
+    typename = property(__get_typename)
+
+    # Handy accessor method - just calls into datastore
+    def __getlabel(self):
+        return self.ds.symbols.getSymbol(self.addr)
+    label = property(__getlabel)
+
+    # Handy comment accessor method - just calls into datastore
     def __getcomment(self):
         comment = self.ds.comments.getComments(self.addr,
             position=CommentPosition.POSITION_RIGHT)
@@ -163,32 +147,14 @@ class MemoryInfo(object):
             return ""
 
         return comment[0]
-
     comment = property(__getcomment)
-
-    # General type of the data
-    # Currently two valid values ["code", "data"]
-    def __validate_typeclass(value):
-        return value in ["code", "data", "default"]
-
-    typeclass = SUD("_typeclass", __validate_typeclass)
-    __validate_typeclass = staticmethod(__validate_typeclass)
-
-    # Actual type of the data
-    typename = SUD("_typename")
-
-    def __getlabel(self):
-        return self.ds.symbols.getSymbol(self.addr)
-    label = property(__getlabel)
 
     def __get_cdict(self):
         return self.__cdict
     cdict = property(__get_cdict)
 
-    def __init__(self, ff, addr, length, typeclass,
+    def __init__(self, addr, length, typeclass,
         typename, disasm, ds, persist_attribs):
-
-        assert ff == "key!!"  # Make sure all incorrect instantiations are gone
 
         self.ds = ds
         # legacy
@@ -202,14 +168,14 @@ class MemoryInfo(object):
         else:
             self.persist_attribs = persist_attribs
 
-        self._addr = addr
-        self._length = length
-        self._disasm = disasm
+        self.__addr = addr
+        self.__length = length
+        self.__disasm = disasm
 
         assert MemoryInfo.__validate_typeclass(typeclass)
-        self._typeclass = typeclass
+        self.__typeclass = typeclass
 
-        self._typename = typename
+        self.__typename = typename
 
         # Should go away too
         self.xrefs = []

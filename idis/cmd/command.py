@@ -1,4 +1,4 @@
-from idis.dbtypes import CommentPosition
+from datastore.dbtypes import CommentPosition
 
 
 class BaseCommand(object):

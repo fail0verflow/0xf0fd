@@ -1,7 +1,6 @@
 
 import unittest
-from datastore import DataStore
-from idis.dbtypes import CommentPosition
+from datastore import DataStore, CommentPosition
 from idis.tools import *
 import sqlite3
 import functools

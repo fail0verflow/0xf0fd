@@ -1,20 +1,27 @@
 import sqlite3
 from cPickle import loads, dumps
 import zlib
-from idis.dbtypes import *
-from idis.command_list import CommandList
-from arch.shared_mem_types import *
-
 
 from properties import *
 from commentlist import *
 from symbollist import *
 from segmentlist import *
-from idis.fsignal import FSignal
+from fsignal_thunk import *
+from dbtypes import *
+
+# TODO - Remove / move these dependancies
+from idis.command_list import CommandList
 
 
 class DataStore:
-    def __init__(self, filename_db):
+    def __init__(self, filename_db, decoder_lookup=None):
+
+        # Invoked whenever a decoder needs to be created
+        if decoder_lookup:
+            self.decoder_lookup = decoder_lookup
+        else:
+            self.decoder_lookup = self.fakeDecoderLookup
+
         self.updates = 0
         self.inserts = 0
         self.deletes = 0
@@ -59,6 +66,9 @@ class DataStore:
 
         if self.db_version != self.__my_db_version:
             raise IOError("Could not load database, different DB version")
+
+    def fakeDecoderLookup(self, ds, typename):
+        raise NotImplementedError("No decoder lookup function was provided")
 
     def addrs(self):
         self.flushInsertQueue()
@@ -233,8 +243,16 @@ class DataStore:
 
             self.meminfo_misses += 1
 
+            try:
+                params = loads(str(row[4]))
+            except ImportError:
+                print "Warning, discarding params for %x" % row[0]
+                params = {
+                        "saved_params": None
+                    }
+
             obj = MemoryInfo.createFromParams(
-                self, row[0], row[1], row[3], row[2], loads(str(row[4])))
+                self, row[0], row[1], row[3], row[2], params)
 
             obj.ds_link = self.__changed
             obj.ds = self
