@@ -18,8 +18,8 @@ class Arrow(object):
 
         self.equiv_arrows = []
 
-    def __str__(self):
-        return "%04x -> %04x, [%d]" % (self.src, self.dst, self.dependents)
+    def __repr__(self):
+        return "[%s] %04x -> %04x, [%d] [%s] below: [%s]" % ("+" if self.drawn else " ", self.src, self.dst, self.dependents, " ".join(["%x->%x" % (i.src, i.dst) for i in self.equiv_arrows]),  " ".join(["%x->%x" % (i.src, i.dst) for i in self.higher_arrows]) )
 
 
 
@@ -179,26 +179,40 @@ class FDArrowView(object):
 
         # prepare the arrow list for layout/drawing
         queue = [a for a in nodes if a.dependents == 0]
-        for i in queue:
+        for i in nodes:
             i.min_x = 67
        
         min_addr = min(addr_line_map.keys())
         max_addr = max(addr_line_map.keys())
         
         # Iterate one level of arrows at a time
+        import time
+        start_time = time.time()
         while queue:
+            if time.time() > start_time + 0.5:
+                for j in set(queue):
+                    print "All Nodes:"
+                    print "\n".join([repr(i) for i in nodes])
+                    print "Queue:"
+                    print "\n".join([repr(i) for i in queue])
+                    print
+
+                return
             a = queue[0]
             queue = queue[1:]
             if a.drawn:
                 continue
             
             # If there are still dependant arrows to be drawn, defer drawing this arrow
-            if a.dependents or any(map(lambda i: i.dependents > 0, a.equiv_arrows)):
+            if a.dependents:
                 queue.append(a)
-                queue.extend(a.equiv_arrows)
                 continue
+            
+            group_ready = not any(map(lambda i: i.dependents > 0, a.equiv_arrows))
 
             selected = self.selected_addr in [a.src, a.dst]
+
+            min_group = min([i.min_x for i in [a] + a.equiv_arrows])
 
             for arrow in [a] + a.equiv_arrows:
                 skip_arrow = False
@@ -224,17 +238,31 @@ class FDArrowView(object):
                     else:
                         skip_arrow = True
 
-                if not skip_arrow:
-                    self.drawArrow(p, 
-                        arrow.min_x, 
-                        src_line,
-                        dst_line,
-                        selected)
+                if group_ready:
+                    if not skip_arrow and not arrow.drawn:
+                        self.drawArrow(p, 
+                            min_group, 
+                            src_line,
+                            dst_line,
+                            selected)
 
-                arrow.drawn = True
+                    arrow.drawn = True
 
-                for j in arrow.higher_arrows:
-                    j.min_x = min(arrow.min_x-12, j.min_x)
-                    j.dependents -= 1
-                    queue.append(j)
+                # If there are no dependents left, add all non-drawn parents to queue
+                if arrow.dependents == 0:
+                    for j in arrow.higher_arrows:
+
+                        # If we drew the arrow, bump the arrows above us away
+                        # The only reason we wouldn't draw the arrow is if there's an unsatisfied
+                        # equivalent arrow, in which case we'll get drawn then
+                        if arrow.drawn:
+                            j.min_x = min(arrow.min_x-12, j.min_x)
+                            
+                        j.dependents -= 1
+                        if j.dependents == 0:
+                            queue.append(j)
+
+                    # Since we've cleared the above deps, delete this link as well
+                    arrow.higher_arrows = []
+
  
