@@ -1,6 +1,6 @@
 import sys
 
-from idis.datastore import DataStore
+from datastore import DataStore
 
 
 ds = DataStore(sys.argv[1])
@@ -11,4 +11,5 @@ print """
 Address: %04x
 length: %d
 TypeClass: %s
-TypeName: %s""" % (location.addr, location.length, location.typeclass, location.typename)
+TypeName: %s""" % (location.addr, location.length,
+    location.typeclass, location.typename)

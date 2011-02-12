@@ -1,16 +1,17 @@
 
 import unittest
-from idis.datastore import DataStore
+from datastore import DataStore
 from idis.dbtypes import CommentPosition
 from idis.tools import *
 import sqlite3
 import functools
 # Regression/functionality/unit tests for segment
 
+
 class segmentFunctionalityCases(unittest.TestCase):
     def setUp(self):
         self.ds = DataStore(":memory:")
-        data = [1,2,3,4,5]
+        data = [1, 2, 3, 4, 5]
         self.ds.segments.addSegment(0x1234, len(data), "ROM", data)
         self.seg = self.ds.segments.__iter__().next()
 
@@ -48,7 +49,7 @@ class segmentFunctionalityCases(unittest.TestCase):
     def test_mapInOutRoundTrip(self):
         addr = 0x1
 
-        # should map to addr 0x1235 - 
+        # should map to addr 0x1235 -
         #   but this is an implementation detail
 
         mapped_in = self.seg.mapIn(addr)
@@ -61,9 +62,9 @@ class segmentFunctionalityCases(unittest.TestCase):
     def test_mapInLinearity(self):
         self.assertEquals(
             self.seg.mapIn(0) + 2,
-            self.seg.mapIn(0+2)
+            self.seg.mapIn(0 + 2)
             )
-            
+
     def test_mapInOOR1(self):
         self.assertRaises(ValueError, functools.partial(
             self.seg.mapIn, 0x1233
@@ -82,36 +83,32 @@ class segmentListPersistence(segmentFunctionalityCases):
 
         # Populate the datastore
         self.ds = DataStore(db)
-        data = [1,2,3,4,5]
+        data = [1, 2, 3, 4, 5]
         self.ds.segments.addSegment(0x1234, len(data), "ROM", data)
         self.seg = self.ds.segments.__iter__().next()
         del self.ds
-        
+
         # Reload the datastore from the db
         self.ds = DataStore(db)
 
 
-
-
-        
 class segmentListFunctionality(unittest.TestCase):
     # Verify that the layoutChanged signal is emitted
     def testAddLayoutChanged(self):
         fired = [False]
+
         def mockChangeHDLR():
             fired[0] = True
 
         ds = DataStore(":memory:")
         ds.layoutChanged.connect(mockChangeHDLR)
 
-        data = [0,1,2,3,4]
-        ds.segments.addSegment(0x0, len(data), "ROM", data) 
+        data = [0, 1, 2, 3, 4]
+        ds.segments.addSegment(0x0, len(data), "ROM", data)
         self.assertEqual(fired[0], True)
 
 suite = unittest.TestSuite([
     unittest.TestLoader().loadTestsFromTestCase(segmentFunctionalityCases),
     unittest.TestLoader().loadTestsFromTestCase(segmentListFunctionality),
     unittest.TestLoader().loadTestsFromTestCase(segmentListPersistence)
-
     ])
-

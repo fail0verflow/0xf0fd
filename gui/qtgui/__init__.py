@@ -4,7 +4,7 @@ import os.path
 
 from PySide import QtCore, QtGui
 
-from idis.datastore import DataStore
+from datastore import DataStore
 from arch.shared_opcode_types import *
 from disassemblywidget import DisassemblyWidget
 from symbolwidget import SymbolWidget

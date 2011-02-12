@@ -22,7 +22,7 @@ def dbghook(type, value, tb):
 
 import traceback
 import sys
-from idis.datastore import DataStore
+from datastore import DataStore
 import idis.tools
 
 gui_instance = None
