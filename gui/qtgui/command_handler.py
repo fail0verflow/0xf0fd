@@ -91,7 +91,11 @@ class CommandHandler(object):
         length = int(bpw.lengthEdit.text(),0)
         idis.tools_loaders.addBinary(self.ds, filename, base_addr, start_offset, length)
         
-        
+    def handleAddIHEX(self, addr):
+        # FIXME: use command pattern
+        filename, filter = QtGui.QFileDialog.getOpenFileName()
+        idis.tools_loaders.addIHex(self.ds, filename)
+            
     def handleInspect(self, addr):
         info = self.ds[addr]
         iw = InspectWindow(info)
@@ -147,6 +151,7 @@ class CommandHandler(object):
 
         handlers = [
             ("A", "AddBinary"),
+            ("B", "AddIHEX"),
             ("I", "Inspect"),
             ("C", "CodeFollow"),
             ("Return", "FollowJump"),
