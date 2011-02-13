@@ -99,19 +99,24 @@ class CommandHandler(object):
         filename, filter = QtGui.QFileDialog.getOpenFileName()
         idis.tools_loaders.addIHex(self.ds, filename)
 
-    def handleInspect(self, addr):
-        info = self.ds[addr]
+    def handleInspect(self, ident):
+        rc, info = self.ds.infostore.lookup(ident)
+        if rc != self.ds.infostore.LKUP_OK:
+            return
+
         iw = InspectWindow(info)
         iw.show()
         self.iws += [iw]
 
-    def handleSetLabel(self, addr):
-        oldlabel = self.ds[addr].label
+    def handleSetLabel(self, ident):
+        oldlabel = self.ds.symbols.getSymbol(ident)
+
+        # FIXME: replace ident with SECTION:addr
         text, ok = QtGui.QInputDialog.getText(None,
-            "Set Label", "Enter a label for addr %04x" % addr, text=oldlabel)
+            "Set Label", "Enter a label for addr %04x" % ident, text=oldlabel)
 
         if ok and text != oldlabel:
-            self.ds.cmdlist.push(SymbolNameCommand(addr, text))
+            self.ds.cmdlist.push(SymbolNameCommand(ident, text))
 
     def handleCodeFollow(self, addr):
         # FIXME: use command pattern [super object]
@@ -120,15 +125,16 @@ class CommandHandler(object):
 
     def handleFollowJump(self, addr):
         newaddr = idis.tools.follow(self.ds, addr)
-        try:
-            self.ds[newaddr]
-            self.memstack.append(
-                (self.view.view.getTopAddr(), self.view.view.getSelAddr()))
 
-            self.view.gotoIdent(newaddr)
+        rc, obj = self.ds.infostore.lookup(addr)
 
-        except KeyError:
-            pass
+        if rc != self.ds.infostore.LKUP_OK:
+            return
+
+        self.memstack.append(
+            (self.view.view.getTopAddr(), self.view.view.getSelAddr()))
+
+        self.view.gotoIdent(newaddr)
 
     def handleCodeReturn(self, addr):
         try:

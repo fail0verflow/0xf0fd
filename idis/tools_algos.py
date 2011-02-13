@@ -1,32 +1,7 @@
 from datastore.dbtypes import *
+from datastore.infostore import InfoStore
+from datastore import DataStore
 import arch
-
-
-# Clean and rebuild should never need to be called
-# FIXME: Remove after verifying there is no use case
-def clean(ds):
-    cleanlist = []
-    for i in ds:
-        if "insn" in i.cdict:
-            for j in xrange(i.length - 1):
-                if i.addr + j + 1 in ds:
-                    cleanlist .append(i.addr + j + 1)
-    for i in cleanlist:
-        del ds[i]
-
-
-# FIXME: Remove after verifying there is no use case
-def rebuild(ds, arch):
-    for i in ds:
-        if "insn" in i.cdict:
-            fetched_mem = ds.readBytes(i.addr, 6)
-            insn = arch.decode(i.addr, fetched_mem)
-
-            if (insn.length != i.length):
-                raise ValueError("New instruction length, can't rebuild")
-
-            i.disasm = insn.disasm
-            i.cdict["decoding"] = insn
 
 
 # entry_point is an ident
@@ -42,12 +17,9 @@ def codeFollow(ds, arch_name, entry_point):
     while q:
         pc = q.pop()
 
-        if pc in ds and ds[pc].typeclass != "default":
-            continue
+        rcode, _ = ds.infostore.lookup(pc)
 
-        try:
-            ds[pc]
-        except KeyError:
+        if rcode != InfoStore.LKUP_NONE:
             continue
 
         try:
@@ -73,9 +45,10 @@ def codeFollow(ds, arch_name, entry_point):
 
         # Make sure memory is clear
         mem_clear = True
-        for i in xrange(insn.length()):
+        for i in xrange(1, insn.length()):
             try:
-                if ds[pc + i].typeclass != "default":
+                rc, _ = ds.infostore.lookup(pc + i)
+                if rc != InfoStore.LKUP_NONE:
                     mem_clear = False
             except KeyError:
                 pass
@@ -88,12 +61,4 @@ def codeFollow(ds, arch_name, entry_point):
         except AttributeError:
             q.extend([insn.length() + pc])
 
-        m = MemoryInfo.createForTypeName(ds, pc, arch_name)
-
-        for i in xrange(m.length):
-            try:
-                del ds[pc + i]
-            except KeyError:
-                pass
-
-        ds[pc] = m
+        ds.infostore.setType(pc, arch_name)

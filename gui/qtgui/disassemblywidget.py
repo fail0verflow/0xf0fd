@@ -1,6 +1,7 @@
 from disassemblyview import DisassemblyGraphicsView
 from PySide import QtCore, QtGui
 from command_handler import *
+from datastore import InfoStore
 
 
 class SegmentLineMapper(object):
@@ -64,12 +65,18 @@ class DisassemblyWidget(QtGui.QAbstractScrollArea):
         else:
             if evt.k == QtCore.Qt.Key_Down:
                 selected_addr = self.view.getSelAddr()
-                next_addr = selected_addr + self.ds[selected_addr].length
+                rc, obj = self.ds.infostore.lookup(selected_addr)
+                if rc != InfoStore.LKUP_OK:
+                    return
+
+                next_addr = selected_addr + obj.length
+
                 self.view.setSelAddr(next_addr)
 
             elif evt.k == QtCore.Qt.Key_Up:
                 selected_addr = self.view.getSelAddr()
-                next_addr = self.ds.findStartForAddress(selected_addr - 1)
+                next_addr = self.ds.infostore.findStartForAddress(
+                    selected_addr - 1)
 
                 if next_addr == None:
                     return
@@ -105,7 +112,7 @@ class DisassemblyWidget(QtGui.QAbstractScrollArea):
 
     def scrollEvent(self, value):
         mapped_addr = self.sm.mapLineToIdent(value)
-        seek_addr = self.ds.findStartForAddress(mapped_addr)
+        seek_addr = self.ds.infostore.findStartForAddress(mapped_addr)
 
         assert seek_addr != None
         self.view.setTopAddr(seek_addr)

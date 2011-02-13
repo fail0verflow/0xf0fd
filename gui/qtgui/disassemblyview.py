@@ -6,7 +6,7 @@ from arch.shared_opcode_types import *
 # TODO: Removeme
 from arch.common.hacks import *
 
-from datastore import CommentPosition
+from datastore import CommentPosition, InfoStore
 from textview import FDTextArea, FDTextAttribs
 from arrow_view import FDArrowView
 
@@ -162,18 +162,18 @@ class DisassemblyGraphicsView(QtGui.QWidget):
         # selected line background
         sel_line = QtGui.QColor(200, 200, 255)
 
-        line_memaddr = self.memaddr_top
+        line_ident = self.memaddr_top
 
         i = 0
         i_mod = 0
         while i < nlines:
 
-            segment = self.ds.segments.findSegment(line_memaddr)
+            segment = self.ds.segments.findSegment(line_ident)
 
-            try:
-                line_data = self.ds[line_memaddr]
-            except KeyError:
-                line_segaddr = segment.mapIn(line_memaddr)
+            rc, line_data = self.ds.infostore.lookup(line_ident)
+
+            if rc != InfoStore.LKUP_OK:
+                line_segaddr = segment.mapIn(line_ident)
                 line_segname = segment.name + ":" if line_seg.name else ""
 
                 self.atv.addText(i, self.addrX,
@@ -186,7 +186,7 @@ class DisassemblyGraphicsView(QtGui.QWidget):
                     "<err - couldn't lookup, but in segment!>",
                     self.getStyle(STYLE_INTERNALERROR))
 
-                line_memaddr += 1
+                line_ident += 1
                 i += 1
                 continue
 
@@ -223,9 +223,9 @@ class DisassemblyGraphicsView(QtGui.QWidget):
 
             # Draw addresses
             for indiv_line in xrange(lines_needed):
-                self.line_addr_map[indiv_line + i] = line_memaddr
+                self.line_addr_map[indiv_line + i] = line_ident
                 line_seg = segment
-                line_segaddr = line_seg.mapIn(line_memaddr)
+                line_segaddr = line_seg.mapIn(line_ident)
                 line_segname = line_seg.name + ":" if line_seg.name else ""
                 self.atv.addText(indiv_line + i, self.addrX,
                     "%s%08x:" % (line_segname, line_segaddr),
@@ -238,7 +238,7 @@ class DisassemblyGraphicsView(QtGui.QWidget):
                 "%s" % opcode,
                 self.getStyle(STYLE_OPCODE))
 
-            self.addr_line_map[line_memaddr] = disasm_start + i
+            self.addr_line_map[line_ident] = disasm_start + i
 
             # Add addr to disasm
             try:
@@ -276,7 +276,7 @@ class DisassemblyGraphicsView(QtGui.QWidget):
 
             # Draw comment
             comment = self.ds.comments.getCommentText(
-                line_memaddr, CommentPosition.POSITION_RIGHT)
+                line_ident, CommentPosition.POSITION_RIGHT)
 
             if comment:
                 self.atv.addText(
@@ -293,7 +293,7 @@ class DisassemblyGraphicsView(QtGui.QWidget):
                     "-" * 60,
                     self.getStyle(STYLE_DIVIDER))
 
-            line_memaddr += line_data.length
+            line_ident += line_data.length
             i += lines_needed
             i_mod += 1
 

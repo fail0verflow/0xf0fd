@@ -12,3 +12,6 @@ except ImportError:
 
         def connect(*args):
             raise NotImplementedError()
+
+        def __call__(*args):
+            pass
