@@ -14,6 +14,7 @@ STYLE_HEXADDR = 0x80001
 STYLE_COMMENT = 0x80002
 STYLE_OPCODE = 0x80003
 STYLE_DIVIDER = 0x80008
+STYLE_INTERNALERROR = 0x80009
 
 TA = FDTextAttribs
 
@@ -106,6 +107,9 @@ class DisassemblyGraphicsView(QtGui.QWidget):
         elif styleType == STYLE_DIVIDER:
             return TA(color=divider_col)
 
+        elif styleType == STYLE_INTERNALERROR:
+            return TA(color=QtGui.QColor(255, 0, 0))
+
         else:
             return TA(color=fg_col)
 
@@ -163,14 +167,29 @@ class DisassemblyGraphicsView(QtGui.QWidget):
         i = 0
         i_mod = 0
         while i < nlines:
+
+            segment = self.ds.segments.findSegment(line_memaddr)
+
             try:
                 line_data = self.ds[line_memaddr]
             except KeyError:
+                line_segaddr = segment.mapIn(line_memaddr)
+                line_segname = segment.name + ":" if line_seg.name else ""
+
+                self.atv.addText(i, self.addrX,
+                    "%s%08x:" % (line_segname, line_segaddr),
+                    self.getStyle(STYLE_INTERNALERROR))
+
+                self.atv.addText(
+                    i,
+                    self.disasmX,
+                    "<err - couldn't lookup, but in segment!>",
+                    self.getStyle(STYLE_INTERNALERROR))
+
                 line_memaddr += 1
-                break
+                i += 1
                 continue
 
-            segment = self.ds.segments.findSegment(line_data.addr)
             try:
                 dests = [
                     (segment.mapOut(i_), i_, j)
@@ -205,7 +224,7 @@ class DisassemblyGraphicsView(QtGui.QWidget):
             # Draw addresses
             for indiv_line in xrange(lines_needed):
                 self.line_addr_map[indiv_line + i] = line_memaddr
-                line_seg = self.ds.segments.findSegment(line_memaddr)
+                line_seg = segment
                 line_segaddr = line_seg.mapIn(line_memaddr)
                 line_segname = line_seg.name + ":" if line_seg.name else ""
                 self.atv.addText(indiv_line + i, self.addrX,

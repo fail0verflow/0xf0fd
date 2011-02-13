@@ -37,13 +37,13 @@ class DataStore:
             self.conn = filename_db
 
         self.c = self.conn.cursor()
-        self.createTables()
+        self.__createTables()
 
-        self.memory_info_cache = {}
-        self.memory_info_insert_queue = {}
+        self.__memory_info_cache = {}
+        self.__memory_info_insert_queue = {}
 
-        self.memory_info_insert_queue = []
-        self.memory_info_insert_queue_ignore = set()
+        self.__memory_info_insert_queue = []
+        self.__memory_info_insert_queue_ignore = set()
 
         self.symbols = SymbolList(self.conn, "symbols")
         self.comments = CommentList(self.conn, "comments")
@@ -70,14 +70,7 @@ class DataStore:
     def fakeDecoderLookup(self, ds, typename):
         raise NotImplementedError("No decoder lookup function was provided")
 
-    def addrs(self):
-        self.flushInsertQueue()
-
-        addrs = self.c.execute('''SELECT addr FROM memory_info
-            ORDER BY addr ASC''').fetchall()
-
-        return (i[0] for i in addrs)
-
+    # TODO - Remove/fixup me
     def readBytes(self, ident, length=1):
         # FIXME, use findsegment method on SegmentList
         for i in self.segments.segments_cache:
@@ -94,7 +87,7 @@ class DataStore:
 
         raise IOError("no segment could handle the requested read")
 
-    def createTables(self):
+    def __createTables(self):
         # Attrs/obj is a dumped representation of a dict
         self.c.execute('''
             CREATE TABLE IF NOT EXISTS memory_info
@@ -149,69 +142,22 @@ class DataStore:
 
         return DataStoreIterator(self, addrs)
 
-    def __contains__(self, addr):
-        self.flushInsertQueue()
-
-        row = self.c.execute('''SELECT addr, length
-                    FROM memory_info
-                    WHERE addr <= ? ORDER BY addr DESC LIMIT 1''',
-                  (addr,)).fetchone()
-
-        # If we got no results - this would be the first,
-        # and therefore there is a default for it
-        if not row:
-            try:
-                self.readBytes(addr, 1)
-                return True
-            except IOError:
-                return False
-
-        if row[0] == addr:
-            return True
-
-        # There is a row before and if addr is within
-        # the previous opcode, row doesn't exist
-        if row[0] + row[1] > addr:
-            return False
-
-        # There's a default
-        try:
-            self.readBytes(addr, 1)
-            return True
-        except IOError:
-            return False
-
-    def createDefault(self, ident):
-        # Only return a defaults object if we're within a valid memory range
-        try:
-            self.readBytes(ident, 1)
-            mi = DefaultMock(self, ident)
-            self.memory_info_cache[ident] = mi
-            return mi
-        except IOError:
-            return None
+    def __contains__(self, ident):
+        status, result = self.lookup(ident)
+        return status == self.LKUP_OK
 
     # find the instruction that includes this address
     def findStartForAddress(self, seekaddr):
-        row = self.c.execute('''SELECT addr, length
-                    FROM memory_info
-                    WHERE addr <= ? ORDER BY addr DESC LIMIT 1''',
-                  (seekaddr,)).fetchone()
+        stat, obj = self.lookup(seekaddr)
 
-        if not row:
-            try:
-                self.readBytes(seekaddr)
-            except IOError:
-                return None
+        if stat == self.LKUP_OK:
             return seekaddr
 
-        addr, length = row
+        elif stat == self.LKUP_NONE:
+            return None
 
-        # FIXME: Hack to make default objects work
-        if seekaddr >= addr + length:
-            return seekaddr
-
-        return row[0]
+        elif stat == self.LKUP_OVR:
+            return obj.addr
 
     LKUP_OK = 0     # Found item @ ident
     LKUP_NONE = 1   # No item found @ ident
@@ -228,7 +174,7 @@ class DataStore:
         self.meminfo_fetches += 1
         # See if the object is already around
         try:
-            obj = self.memory_info_cache[addr]
+            obj = self.__memory_info_cache[addr]
 
             # We should never have a "none" result in the cache
             assert (obj != None)
@@ -245,22 +191,24 @@ class DataStore:
                   (addr,)).fetchone()
 
             if not row:
-                self.meminfo_failures += 1
-                result = self.createDefault(addr)
-                if result:
-                    return self.LKUP_OK, result
                 return self.LKUP_NONE, None
+
+            resultcode = self.LKUP_OK
 
             # If the row doesn't equal the address, then
             # either we found a memory object that finishes
             # before this address, or one that overlaps this address
             if row[0] != addr:
                 if row[0] + row[1] > addr:
-                    return self.LKUP_OVR, None
-                result = self.createDefault(addr)
-                if result:
-                    return self.LKUP_OK, result
-                return self.LKUP_NONE, None
+                    # See whether we already know the object we're in
+                    try:
+                        obj = self.__memory_info_cache[row[0]]
+                        return self.LKUP_OVR, obj
+                    except KeyError:
+                        pass
+                    resultcode = self.LKUP_OVR
+                else:
+                    return self.LKUP_NONE, None
 
             self.meminfo_misses += 1
 
@@ -278,9 +226,15 @@ class DataStore:
             obj.ds_link = self.__changed
             obj.ds = self
 
-            self.memory_info_cache[addr] = obj
-            assert obj.addr == addr
-            return self.LKUP_OK, obj
+            self.__memory_info_cache[addr] = obj
+
+            if resultcode == self.LKUP_OK:
+                assert obj.addr == addr
+
+            elif resultcode == self.LKUP_OVR:
+                assert obj.addr <= addr and obj.addr + obj.length > addr
+
+            return resultcode, obj
 
     def __setitem__(self, addr, v):
         v.ds = self
@@ -289,45 +243,41 @@ class DataStore:
         try:
             # If the object is in cache, and its the same
             # object, skip write to DB
-            existing_obj = self.memory_info_cache[addr]
+            existing_obj = self.__memory_info_cache[addr]
             if existing_obj == v:
                 return
 
             # Evict the current entry from the cache
-            del self.memory_info_cache[addr]
+            del self.__memory_info_cache[addr]
         except KeyError:
             pass
 
-        if addr in self.memory_info_insert_queue_ignore:
+        if addr in self.__memory_info_insert_queue_ignore:
             self.flushInsertQueue()
 
-        self.memory_info_cache[addr] = v
+        self.__memory_info_cache[addr] = v
 
-        is_default = v.typeclass == "default"
-        assert not is_default
+        assert not v.typeclass == "default"
 
         self.__queue_insert(addr, v)
 
     def __queue_insert(self, addr, v):
         # Not in cache, so save new obj in cache
-        self.memory_info_insert_queue.append(addr)
+        self.__memory_info_insert_queue.append(addr)
 
     def __delitem__(self, addr):
-
-        is_default = self.memory_info_cache[addr].typeclass == "default"
+        is_default = self.__memory_info_cache[addr].typeclass == "default"
+        assert not is_default
 
         try:
-            del self.memory_info_cache[addr]
+            del self.__memory_info_cache[addr]
         except KeyError:
             pass
 
         self.deletes += 1
         #print "DELETE: %d" % self.deletes
 
-        if is_default:
-            return
-
-        self.memory_info_insert_queue_ignore.update([addr])
+        self.__memory_info_insert_queue_ignore.update([addr])
         self.c.execute('''DELETE FROM memory_info WHERE addr=?''',
               (addr,))
 
@@ -343,16 +293,16 @@ class DataStore:
 
     def flushInsertQueue(self):
         params = []
-        for addr in self.memory_info_insert_queue:
-            if addr in self.memory_info_insert_queue_ignore:
+        for addr in self.__memory_info_insert_queue:
+            if addr in self.__memory_info_insert_queue_ignore:
                 continue
-            obj = self.memory_info_cache[addr]
+            obj = self.__memory_info_cache[addr]
             param_l = (obj.addr, obj.length, obj.typeclass,
                 obj.typename, dumps(obj.persist_attribs))
             params.append(param_l)
 
-        self.memory_info_insert_queue_ignore = set()
-        self.memory_info_insert_queue = []
+        self.__memory_info_insert_queue_ignore = set()
+        self.__memory_info_insert_queue = []
 
         self.inserts += len(params)
 

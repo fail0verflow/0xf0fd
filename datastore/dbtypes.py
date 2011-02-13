@@ -23,35 +23,6 @@ class proxy_dict(dict):
         return dict.__delitem__(self, v)
 
 
-# Temporary mock operand until the type system gets sorted out
-class DefaultMock(object):
-    """ Mock object created when there
-    is nothing in the DB about a given address """
-
-    class OperandMock(object):
-        def __init__(self, value):
-            self.value = value
-
-        def render(self, ds, segment):
-            return "0x%02x" % self.value, 0
-
-    class DisasmMock(object):
-        def __init__(self, value):
-            self.mnemonic = ".db"
-            self.operands = [DefaultMock.OperandMock(value)]
-
-    def __init__(self, ds, addr):
-        self.value = ds.readBytes(addr, 1)[0]
-        self.disasm = DefaultMock.DisasmMock(self.value)
-        self.typename = "default"
-        self.typeclass = "default"
-        self.addr = addr
-        self.label = None
-        self.cdict = {}
-        self.length = 1
-        self.comment = ""
-
-
 # Information about a memory location
 class MemoryInfo(object):
     @staticmethod
