@@ -86,6 +86,9 @@ class CommandHandler(object):
     def handleAddBinary(self, addr):
         # FIXME: use command pattern
         filename, filter = QtGui.QFileDialog.getOpenFileName()
+        if not filename:
+            return
+
         bpw = AddBinaryPromptWindow()
         bpw.exec_()
         base_addr = int(bpw.baseEdit.text(), 0)

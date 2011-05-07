@@ -170,6 +170,10 @@ class DisassemblyGraphicsView(QtGui.QWidget):
 
             segment = self.ds.segments.findSegment(line_ident)
 
+            # Fix bug when there are no segments created
+            if not segment:
+                break
+
             rc, line_data = self.ds.infostore.lookup(line_ident)
 
             if rc != InfoStore.LKUP_OK:

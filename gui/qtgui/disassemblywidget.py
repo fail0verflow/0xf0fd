@@ -111,7 +111,11 @@ class DisassemblyWidget(QtGui.QAbstractScrollArea):
         self.view.setSelAddr(self.view.getClickAddr(evt.x(), evt.y()))
 
     def scrollEvent(self, value):
-        mapped_addr = self.sm.mapLineToIdent(value)
+        try:
+            mapped_addr = self.sm.mapLineToIdent(value)
+        except ValueError:
+            return
+
         seek_addr = self.ds.infostore.findStartForAddress(mapped_addr)
 
         assert seek_addr != None
