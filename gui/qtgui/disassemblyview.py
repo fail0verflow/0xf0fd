@@ -113,6 +113,12 @@ class DisassemblyGraphicsView(QtGui.QWidget):
         else:
             return TA(color=fg_col)
 
+    def mapDest(self, segment, d):
+        try:
+            return segment.mapOut(d)
+        except ValueError:
+            return None
+
     def calculateLineParameters(self, data):
         lines_needed = 1
         disasm_start = 0
@@ -127,10 +133,10 @@ class DisassemblyGraphicsView(QtGui.QWidget):
         try:
             segment = self.ds.segments.findSegment(data.addr)
             dests = [
-                (segment.mapOut(i), i, j)
+                (self.mapDest(segment, i), j)
                 for i, j in data.disasm.dests()]
 
-            if data.addr + data.length not in [i for i, _, _ in dests]:
+            if data.addr + data.length not in [i for i, _ in dests]:
                 lines_needed += 2
                 divider_start = disasm_start + 1
 
@@ -196,10 +202,11 @@ class DisassemblyGraphicsView(QtGui.QWidget):
 
             try:
                 dests = [
-                    (segment.mapOut(i_), i_, j)
+                    (self.mapDest(segment, i_), i_, j)
                     for i_, j in line_data.disasm.dests()
                     ]
 
+            # In case "dests" is not implemented
             except AttributeError:
                 dests = []
 

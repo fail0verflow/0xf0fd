@@ -141,14 +141,18 @@ class PCJmpDestination(Operand):
     def render(self, ds=None, segment=None):
         typecode = TYPE_UNSPEC
         if ds:
-            ident = segment.mapOut(self.addr)
-            rc, obj = ds.infostore.lookup(ident)
-
-            if rc != ds.infostore.LKUP_OK:
+            try:
+                ident = segment.mapOut(self.addr)
+            except ValueError:
                 typecode = TYPE_DEST_INVALID
+            else:
+                rc, obj = ds.infostore.lookup(ident)
 
-            elif obj.label:
-                return obj.label, TYPE_SYMBOLIC
+                if rc != ds.infostore.LKUP_OK:
+                    typecode = TYPE_DEST_INVALID
+
+                elif obj.label:
+                    return obj.label, TYPE_SYMBOLIC
 
         return "%#04x" % self.addr, typecode
 
