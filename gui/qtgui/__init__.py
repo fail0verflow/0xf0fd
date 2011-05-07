@@ -84,7 +84,10 @@ class QTGui(object):
 
     def newWithArchCallback(self, archname):
         self.global_archname = archname
-        self.ds = DefaultMockProxy(DataStore(self.filename, arch.getDecoder))
+
+        self.ds = DataStore(self.filename, arch.getDecoder)
+        self.user_ds = DefaultMockProxy(self.ds)
+
         self.ds.properties.set("f0fd.HACK_arch_name", archname)
         self.createMainWindow()
 
@@ -109,8 +112,8 @@ class QTGui(object):
             apw.show()
         else:
             # File exists, make sure the architecture type is properly set
-            self.ds = DefaultMockProxy(
-                DataStore(self.filename, arch.getDecoder))
+            self.ds = DataStore(self.filename, arch.getDecoder)
+            self.user_ds = DefaultMockProxy(self.ds)
             try:
                 self.global_archname = \
                     self.ds.properties.get("f0fd.HACK_arch_name")

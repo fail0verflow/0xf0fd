@@ -47,6 +47,7 @@ class MainWindow(QtGui.QMainWindow):
         super(MainWindow, self).__init__()
         self.gui = gui
         self.datastore = gui.ds
+        self.user_proxy = gui.user_ds
 
         self.__menuBar = QtGui.QMenuBar(self)
 
@@ -76,7 +77,9 @@ class MainWindow(QtGui.QMainWindow):
         self.resize(800, 600)
         self.setWindowTitle(filename)
 
-        self.disassemblyWidget = DisassemblyWidget(self, gui, self.datastore)
+        self.disassemblyWidget = DisassemblyWidget(self, gui, self.datastore,
+                self.user_proxy)
+
         symbolWidget = SymbolWidget(self, self.datastore)
 
         symbolWidget.widget.symbolSelected.connect(

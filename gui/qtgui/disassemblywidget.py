@@ -32,13 +32,14 @@ class SegmentLineMapper(object):
 
 
 class DisassemblyWidget(QtGui.QAbstractScrollArea):
-    def __init__(self, parent, gui, ds):
+    def __init__(self, parent, gui, ds, user_proxy):
         super(DisassemblyWidget, self).__init__(parent)
         self.window_up = parent
 
-        self.sm = SegmentLineMapper(ds)
+        self.sm = SegmentLineMapper(user_proxy)
+        self.user_proxy = user_proxy
         self.ds = ds
-        self.view = DisassemblyGraphicsView(self.ds, self.sm)
+        self.view = DisassemblyGraphicsView(user_proxy, self.sm)
 
         self.setViewport(self.view)
         self.ch = CommandHandler(gui, self.ds, self)
@@ -116,7 +117,9 @@ class DisassemblyWidget(QtGui.QAbstractScrollArea):
         except ValueError:
             return
 
-        seek_addr = self.ds.infostore.findStartForAddress(mapped_addr)
+        # Use user_proxy here since the user_proxy will generate lines
+        # where none are otherwise
+        seek_addr = self.user_proxy.infostore.findStartForAddress(mapped_addr)
 
         assert seek_addr != None
         self.view.setTopAddr(seek_addr)
