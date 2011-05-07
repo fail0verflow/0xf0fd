@@ -44,36 +44,6 @@ class AddCommentWindow(QtGui.QDialog):
         self.setWindowModality(QtCore.Qt.ApplicationModal)
 
 
-class AddBinaryPromptWindow(QtGui.QDialog):
-    def __init__(self):
-        super(AddBinaryPromptWindow, self).__init__()
-
-        # Todo - make validator that changes background red for bad values
-        # and disables okButton
-
-        # TODO: add cancel button
-
-        # TODO: remove close and make act like a normal dialog
-        okButton = QtGui.QPushButton("OK")
-        okButton.setDefault(True)
-        QtCore.QObject.connect(okButton,
-            QtCore.SIGNAL('clicked()'), self.accept)
-
-        buttonBox = QtGui.QDialogButtonBox(QtCore.Qt.Vertical)
-        buttonBox.addButton(okButton, QtGui.QDialogButtonBox.ActionRole)
-
-        self.formLayout = QtGui.QFormLayout()
-        self.baseEdit = QtGui.QLineEdit("0x0")
-        self.startEdit = QtGui.QLineEdit("0x0")
-        self.lengthEdit = QtGui.QLineEdit("-1")
-        self.formLayout.addRow("&Base Address:", self.baseEdit)
-        self.formLayout.addRow("&Start Offset:", self.startEdit)
-        self.formLayout.addRow("&Length:", self.lengthEdit)
-        self.formLayout.addWidget(buttonBox)
-        self.setLayout(self.formLayout)
-        self.setWindowModality(QtCore.Qt.ApplicationModal)
-
-
 class CommandHandler(object):
 
     def handleSetStdComment(self, ident, pos=CommentPosition.POSITION_RIGHT):
@@ -82,25 +52,6 @@ class CommandHandler(object):
         cw = AddCommentWindow(pos, oldcomment)
         cw.exec_()
         self.ds.cmdlist.push(CommentCommand(ident, pos, cw.edit.toPlainText()))
-
-    def handleAddBinary(self, addr):
-        # FIXME: use command pattern
-        filename, filter = QtGui.QFileDialog.getOpenFileName()
-        if not filename:
-            return
-
-        bpw = AddBinaryPromptWindow()
-        bpw.exec_()
-        base_addr = int(bpw.baseEdit.text(), 0)
-        start_offset = int(bpw.startEdit.text(), 0)
-        length = int(bpw.lengthEdit.text(), 0)
-        applogic.tools_loaders.addBinary(self.ds,
-            filename, base_addr, start_offset, length)
-
-    def handleAddIHEX(self, addr):
-        # FIXME: use command pattern
-        filename, filter = QtGui.QFileDialog.getOpenFileName()
-        applogic.tools_loaders.addIHex(self.ds, filename)
 
     def handleInspect(self, ident):
         rc, info = self.ds.infostore.lookup(ident)
@@ -164,8 +115,6 @@ class CommandHandler(object):
         self.view = view
 
         handlers = [
-            ("A", "AddBinary"),
-            ("B", "AddIHEX"),
             ("I", "Inspect"),
             ("C", "CodeFollow"),
             ("Return", "FollowJump"),

@@ -10,6 +10,7 @@ from disassemblywidget import DisassemblyWidget
 from applogic.defaultmockproxy import DefaultMockProxy
 
 from symbolwidget import SymbolWidget
+from mainwindow import MainWindow
 import arch
 
 
@@ -70,39 +71,6 @@ class ArchPromptWindow(QtGui.QWidget):
         self.callback(
             self.qcb.itemData(self.qcb.currentIndex(),
                 role=QtCore.Qt.UserRole))
-
-
-class MainWindow(QtGui.QMainWindow):
-    def __init__(self, gui, filename):
-        super(MainWindow, self).__init__()
-        self.gui = gui
-        self.datastore = gui.ds
-
-        self.__menuBar = QtGui.QMenuBar(self)
-        self.fileMenu = QtGui.QMenu("Edit", self)
-        self.undoAction = self.fileMenu.addAction("Undo")
-        self.redoAction = self.fileMenu.addAction("Redo")
-
-        self.undoAction.triggered.connect(self.doUndo)
-
-        self.menuBar().addMenu(self.fileMenu)
-        #self.setMenuBar(self.__menuBar)
-
-        self.resize(800, 600)
-        self.setWindowTitle(filename)
-
-        self.disassemblyWidget = DisassemblyWidget(self, gui, self.datastore)
-        symbolWidget = SymbolWidget(self, self.datastore)
-
-        symbolWidget.widget.symbolSelected.connect(
-            self.disassemblyWidget.gotoIdentSL)
-
-        self.setCentralWidget(self.disassemblyWidget)
-        self.addDockWidget(QtCore.Qt.LeftDockWidgetArea, symbolWidget)
-
-    def doUndo(self):
-        self.datastore.cmdlist.rewind(1)
-        self.disassemblyWidget.update()
 
 
 class QTGui(object):
