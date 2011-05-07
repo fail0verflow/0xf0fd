@@ -1,7 +1,7 @@
 
 import unittest
 from datastore import DataStore, CommentPosition
-from idis.tools import *
+from applogic.tools import *
 import sqlite3
 import functools
 # Regression/functionality/unit tests for segment

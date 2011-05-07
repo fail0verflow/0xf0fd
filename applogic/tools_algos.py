@@ -20,6 +20,7 @@ def codeFollow(ds, arch_name, entry_point):
         rcode, _ = ds.infostore.lookup(pc)
 
         if rcode != InfoStore.LKUP_NONE:
+            print "warning, %s already present, %d" % (pc, rcode)
             continue
 
         try:

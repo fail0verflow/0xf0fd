@@ -26,11 +26,9 @@ Internal Commands:
 
 
 HACKING GUIDE
-arch          Disassemblers for different architectures, and arch-common code
-gui/curses    old curses gui [deprecated]
-gui/qt        new QT gui [not yet in existence]
-idis          common code
-
-PLAN - stabilize / cleanup disassembler + code system, write importer to bring database from old version to new
-     - write QT gui awesomeness; maybe bring in some bits / concepts from dismember?
-
+gui     - as-thin-as-possible gui code, map actions in "harness" to user actions/dialogs
+harness - "business logic"
+engine  -
+    arch/
+    analysis/
+datastore

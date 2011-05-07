@@ -7,7 +7,7 @@ from PySide import QtCore, QtGui
 from datastore import DataStore
 from arch.shared_opcode_types import *
 from disassemblywidget import DisassemblyWidget
-from idis.defaultmockproxy import DefaultMockProxy
+from applogic.defaultmockproxy import DefaultMockProxy
 
 from symbolwidget import SymbolWidget
 import arch
@@ -116,20 +116,20 @@ class QTGui(object):
         mainWin = MainWindow(self, self.filename)
         mainWin.show()
 
-    def newWithArchCallback(self, arch):
-        self.global_archname = arch
+    def newWithArchCallback(self, archname):
+        self.global_archname = archname
         self.ds = DefaultMockProxy(DataStore(self.filename, arch.getDecoder))
-        self.ds.properties.set("f0fd.HACK_arch_name", arch)
+        self.ds.properties.set("f0fd.HACK_arch_name", archname)
         self.createMainWindow()
 
-    def runShowCallBack(self, arch):
-        self.global_archname = arch
-        self.ds.properties.set("f0fd.HACK_arch_name", arch)
+    def runShowCallBack(self, archname):
+        self.global_archname = archname
+        self.ds.properties.set("f0fd.HACK_arch_name", archname)
         self.createMainWindow()
 
     def mainloop(self, filenames):
         if (len(filenames) < 1):
-            print "usage: idis filename"
+            print "usage: %s filename" % sys.argv[0]
             sys.exit(-1)
 
         self.filename = filenames[0]

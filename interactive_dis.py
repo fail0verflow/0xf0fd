@@ -23,7 +23,7 @@ def dbghook(type, value, tb):
 import traceback
 import sys
 from datastore import DataStore
-import idis.tools
+import applogic.tools
 
 gui_instance = None
 

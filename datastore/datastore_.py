@@ -6,7 +6,7 @@ from symbollist import *
 from segmentlist import *
 from fsignal_thunk import *
 from infostore import InfoStore
-from idis.command_list import CommandList
+from applogic.command_list import CommandList
 from dbtypes import *
 
 

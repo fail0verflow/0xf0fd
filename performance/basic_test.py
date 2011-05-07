@@ -10,8 +10,8 @@ sys.path += [
         os.path.dirname(sys.path[0])
             ]
 
-import idis
-import idis.tools
+import applogic
+import applogic.tools
 from datastore import DataStore
 import arch
 
@@ -30,7 +30,7 @@ testfile_path = my_dir + "/src/8051_flash_trunc.bin"
 startTime = time.time()
 print "Starting tests at time %f" % startTime
 
-idis.tools.addBinary(ds, testfile_path, 0x0, 0x8000, 0x7E00)
+applogic.tools.addBinary(ds, testfile_path, 0x0, 0x8000, 0x7E00)
 
 ds.flush()
 
@@ -39,7 +39,7 @@ print "Loading binary took %f seconds" % (midTime - startTime)
 
 
 runtime_arch = arch.architectureFactory('8051')
-idis.tools.codeFollow(ds, runtime_arch, 0x0)
+applogic.tools.codeFollow(ds, runtime_arch, 0x0)
 
 ds.flush()
 

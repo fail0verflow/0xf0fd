@@ -1,8 +1,8 @@
-import idis.tools
-import idis.tools_algos
+import applogic.tools
+import applogic.tools_algos
 import arch
 
-from idis.cmd.command import *
+from applogic.cmd.command import *
 from datastore import CommentPosition
 from inspect import InspectWindow
 
@@ -91,13 +91,13 @@ class CommandHandler(object):
         base_addr = int(bpw.baseEdit.text(), 0)
         start_offset = int(bpw.startEdit.text(), 0)
         length = int(bpw.lengthEdit.text(), 0)
-        idis.tools_loaders.addBinary(self.ds,
+        applogic.tools_loaders.addBinary(self.ds,
             filename, base_addr, start_offset, length)
 
     def handleAddIHEX(self, addr):
         # FIXME: use command pattern
         filename, filter = QtGui.QFileDialog.getOpenFileName()
-        idis.tools_loaders.addIHex(self.ds, filename)
+        applogic.tools_loaders.addIHex(self.ds, filename)
 
     def handleInspect(self, ident):
         rc, info = self.ds.infostore.lookup(ident)
@@ -121,10 +121,10 @@ class CommandHandler(object):
     def handleCodeFollow(self, addr):
         # FIXME: use command pattern [super object]
         a = self.gui.global_archname
-        idis.tools_algos.codeFollow(self.ds, a, addr)
+        applogic.tools_algos.codeFollow(self.ds, a, addr)
 
     def handleFollowJump(self, addr):
-        newaddr = idis.tools.follow(self.ds, addr)
+        newaddr = applogic.tools.follow(self.ds, addr)
 
         rc, obj = self.ds.infostore.lookup(addr)
 

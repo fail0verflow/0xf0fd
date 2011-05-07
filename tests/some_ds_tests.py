@@ -1,9 +1,9 @@
 import unittest
 from datastore import DataStore, CommentPosition, InfoStore
-from idis.defaultmockproxy import DefaultMockProxy
+from applogic.defaultmockproxy import DefaultMockProxy
 from arch import getDecoder
 import sqlite3
-from idis.tools import *
+from applogic.tools import *
 
 
 class miscTestCases(unittest.TestCase):
