@@ -18,13 +18,18 @@ class DefaultMock(object):
             self.mnemonic = ".db"
             self.operands = [DefaultMock.OperandMock(value)]
 
+    def __getLabelFromDS(self):
+        return self.ds.symbols.getSymbol(self.addr)
+    label = property(__getLabelFromDS)
+
     def __init__(self, ds, addr):
+        self.ds = ds
+
         self.value = ds.readBytes(addr, 1)[0]
         self.disasm = DefaultMock.DisasmMock(self.value)
         self.typename = "default"
         self.typeclass = "default"
         self.addr = addr
-        self.label = None
         self.cdict = {}
         self.length = 1
         self.comment = ""

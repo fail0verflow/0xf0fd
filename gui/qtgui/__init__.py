@@ -6,10 +6,8 @@ from PySide import QtCore, QtGui
 
 from datastore import DataStore
 from arch.shared_opcode_types import *
-from disassemblywidget import DisassemblyWidget
 from applogic.defaultmockproxy import DefaultMockProxy
 
-from symbolwidget import SymbolWidget
 from mainwindow import MainWindow
 import arch
 

@@ -30,7 +30,10 @@ class CommandList(object):
         cmd.execute(self.datastore)
 
     def rewind(self, n):
-        for i in xrange(n):
+
+        n_to_do = min(n, len(self.cmds))
+
+        for i in xrange(n_to_do):
             c = self.cmds.pop()
             c.undo(self.datastore)
             self.forward.append(c)

@@ -53,21 +53,22 @@ class MainWindow(QtGui.QMainWindow):
         # File menu
         menuStructure = [
                 ("File", [
-                    ("Add Binary file...", self.doAddBinary),
-                    ("Add Intel Hex file...", self.doAddIHEX),
-                    ("Import properties...", self.doAddProps),
-                    ("Save properties...", self.doSaveProps)
+                    ("Add Binary file...", self.doAddBinary, None),
+                    ("Add Intel Hex file...", self.doAddIHEX, None),
+                    ("Import properties...", self.doAddProps, None),
+                    ("Save properties...", self.doSaveProps, None)
                     ]),
                 ("Edit", [
-                    ("Undo", self.doUndo),
-                    ("Redo", self.doRedo)
+                    ("Undo", self.doUndo, QtGui.QKeySequence.Undo),
+                    ("Redo", self.doRedo, QtGui.QKeySequence.Redo)
                     ])
                 ]
 
         for menuname, entries in menuStructure:
             m = QtGui.QMenu(menuname, self)
-            for itemname, action in entries:
-                a = m.addAction(itemname)
+            for itemname, action, seq in entries:
+                a = m.addAction(QtGui.QIcon(), itemname, None,
+                        QtGui.QKeySequence(seq))
                 a.triggered.connect(action)
 
             self.menuBar().addMenu(m)

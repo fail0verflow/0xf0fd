@@ -63,6 +63,9 @@ class CommandHandler(object):
         self.iws += [iw]
 
     def handleSetLabel(self, ident):
+        if not ident:
+            return
+
         oldlabel = self.ds.symbols.getSymbol(ident)
 
         # FIXME: replace ident with SECTION:addr
