@@ -37,6 +37,9 @@ class SetTypeCommand(BaseCommand):
         # Ensure we don't have a long remove
         assert dtype_name or type_len == None
 
+        if not dtype_name:
+            self.__type_len = 1
+
     def doLU(self, datastore, i):
         rcode, lu = datastore.infostore.lookup(i)
         if rcode != InfoStore.LKUP_OK:

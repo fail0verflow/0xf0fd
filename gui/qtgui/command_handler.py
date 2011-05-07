@@ -101,6 +101,9 @@ class CommandHandler(object):
 
         self.view.gotoIdent(sel, top)
 
+    def handleUndefine(self, ident):
+        self.ds.cmdlist.push(SetTypeCommand(ident, None))
+
     def buildCmdHandlers(self, pairs):
         """ call with a set of pairs such as:
             [ ( "Semicolon", "AddBinary" ) ] """
@@ -120,6 +123,7 @@ class CommandHandler(object):
         handlers = [
             ("I", "Inspect"),
             ("C", "CodeFollow"),
+            ('U', "Undefine"),
             ("Return", "FollowJump"),
             ("N", "SetLabel"),
             ("Backspace", "CodeReturn"),
