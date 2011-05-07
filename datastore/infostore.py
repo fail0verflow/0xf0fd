@@ -1,6 +1,7 @@
 from cPickle import dumps, loads
 from dbtypes import MemoryInfo
 
+
 class InfoStore(object):
     def __init__(self, parent):
         self.__parent = parent
@@ -11,7 +12,7 @@ class InfoStore(object):
 
         self.__memory_info_cache = {}
         self.__memory_info_insert_queue = {}
-        
+
         self.__memory_info_insert_queue = []
         self.__memory_info_insert_queue_ignore = set()
 
@@ -186,10 +187,11 @@ class InfoStore(object):
         self.remove(ident)
 
     def remove(self, ident):
-        is_default = self.__memory_info_cache[ident].typeclass == "default"
-        assert not is_default
-
         try:
+            # KeyError can be tripped here too
+            is_default = self.__memory_info_cache[ident].typeclass == "default"
+            assert not is_default
+
             del self.__memory_info_cache[ident]
         except KeyError:
             pass

@@ -1,4 +1,5 @@
 from datastore.dbtypes import CommentPosition
+from datastore.infostore import InfoStore
 
 
 class BaseCommand(object):
@@ -18,6 +19,50 @@ class BaseCommand(object):
         about the only valid use is when adding a SuperCommand to the command
         stack where the commands have been executed individually"""
         self.__ran = True
+
+
+class SetTypeCommand(BaseCommand):
+    # dtype_name = None means undefine
+    # type_len is the length of the data that will be constructed
+    #   only use if the length is known beforehand - just an optimization
+    def __init__(self, ident, dtype_name, type_len=None):
+        BaseCommand.__init__(self)
+        self.__ident = ident
+        self.__dtn = dtype_name
+        self.__type_len = type_len
+
+        # HACK: This should be optional, need to fix typesystem first
+        assert not dtype_name or type_len != None
+
+        # Ensure we don't have a long remove
+        assert dtype_name or type_len == None
+
+    def doLU(self, datastore, i):
+        rcode, lu = datastore.infostore.lookup(i)
+        if rcode != InfoStore.LKUP_OK:
+            return None
+        return lu.typename
+
+    def execute(self, datastore):
+        BaseCommand.execute(self)
+
+        # Backup existing typenames
+        self.__bk = [self.doLU(datastore, i) for i in xrange(self.__ident,
+            self.__ident + self.__type_len)]
+
+        # either do re
+        if self.__dtn:
+            datastore.infostore.setType(self.__ident, self.__dtn)
+        else:
+            datastore.infostore.remove(self.__ident)
+
+    def undo(self, datastore):
+        BaseCommand.undo(self)
+        for ident_o, tn in enumerate(self.__bk):
+            if not tn:
+                datastore.infostore.remove(self.__ident + ident_o)
+            else:
+                datastore.infostore.setType(self.__ident + ident_o, tn)
 
 
 class CommentCommand(BaseCommand):
