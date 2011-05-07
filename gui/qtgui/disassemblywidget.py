@@ -66,7 +66,7 @@ class DisassemblyWidget(QtGui.QAbstractScrollArea):
         else:
             if evt.k == QtCore.Qt.Key_Down:
                 selected_addr = self.view.getSelAddr()
-                rc, obj = self.ds.infostore.lookup(selected_addr)
+                rc, obj = self.user_proxy.infostore.lookup(selected_addr)
                 if rc != InfoStore.LKUP_OK:
                     return
 
@@ -76,7 +76,7 @@ class DisassemblyWidget(QtGui.QAbstractScrollArea):
 
             elif evt.k == QtCore.Qt.Key_Up:
                 selected_addr = self.view.getSelAddr()
-                next_addr = self.ds.infostore.findStartForAddress(
+                next_addr = self.user_proxy.infostore.findStartForAddress(
                     selected_addr - 1)
 
                 if next_addr == None:
