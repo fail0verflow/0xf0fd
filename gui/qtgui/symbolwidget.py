@@ -1,4 +1,5 @@
 from PySide import QtCore, QtGui
+from subviewbase import SubViewBase
 
 
 class SymbolModel(QtCore.QAbstractItemModel):
@@ -115,7 +116,7 @@ class SymbolTableView(QtGui.QTableView):
             self.symbolSelected.emit((addr, ))
 
 
-class SymbolWidget(QtGui.QDockWidget):
+class SymbolWidget(SubViewBase):
     def __init__(self, parent_win, ds):
         super(SymbolWidget, self).__init__("Symbols", parent_win)
 

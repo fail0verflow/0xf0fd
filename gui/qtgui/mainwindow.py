@@ -1,8 +1,7 @@
 from PySide import QtGui, QtCore
 
-
+from subviewmgr import SubViewManager
 from disassemblywidget import DisassemblyWidget
-from symbolwidget import SymbolWidget
 
 from datastore.dbtypes import CommentPosition
 
@@ -74,19 +73,14 @@ class MainWindow(QtGui.QMainWindow):
 
             self.menuBar().addMenu(m)
 
-        self.resize(800, 600)
+        self.resize(1200, 600)
         self.setWindowTitle(filename)
 
         self.disassemblyWidget = DisassemblyWidget(self, gui, self.datastore,
                 self.user_proxy)
 
-        symbolWidget = SymbolWidget(self, self.datastore)
-
-        symbolWidget.widget.symbolSelected.connect(
-            self.disassemblyWidget.gotoIdentSL)
-
         self.setCentralWidget(self.disassemblyWidget)
-        self.addDockWidget(QtCore.Qt.LeftDockWidgetArea, symbolWidget)
+        self.subviews = SubViewManager(self)
 
     def doUndo(self):
         self.datastore.cmdlist.rewind(1)
