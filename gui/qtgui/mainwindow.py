@@ -1,9 +1,15 @@
 from PySide import QtGui, QtCore
 
+
 from disassemblywidget import DisassemblyWidget
 from symbolwidget import SymbolWidget
 
+from datastore.dbtypes import CommentPosition
+
+from applogic.cmd import CompoundCommand, SymbolNameCommand, CommentCommand
 import applogic.tools_loaders
+
+import json
 
 
 class AddBinaryPromptWindow(QtGui.QDialog):
@@ -45,23 +51,26 @@ class MainWindow(QtGui.QMainWindow):
         self.__menuBar = QtGui.QMenuBar(self)
 
         # File menu
-        self.fileMenu = QtGui.QMenu("File", self)
-        self.addBinaryAction = self.fileMenu.addAction("Add Binary file...")
-        self.addIHEXAction = self.fileMenu.addAction("Add Intel hex file...")
+        menuStructure = [
+                ("File", [
+                    ("Add Binary file...", self.doAddBinary),
+                    ("Add Intel Hex file...", self.doAddIHEX),
+                    ("Import properties...", self.doAddProps),
+                    ("Save properties...", self.doSaveProps)
+                    ]),
+                ("Edit", [
+                    ("Undo", self.doUndo),
+                    ("Redo", self.doRedo)
+                    ])
+                ]
 
-        self.addBinaryAction.triggered.connect(self.doAddBinary)
-        self.addIHEXAction.triggered.connect(self.doAddIHEX)
+        for menuname, entries in menuStructure:
+            m = QtGui.QMenu(menuname, self)
+            for itemname, action in entries:
+                a = m.addAction(itemname)
+                a.triggered.connect(action)
 
-        # Edit menu
-        self.editMenu = QtGui.QMenu("Edit", self)
-        self.undoAction = self.editMenu.addAction("Undo")
-        self.redoAction = self.editMenu.addAction("Redo")
-
-        self.undoAction.triggered.connect(self.doUndo)
-
-        self.menuBar().addMenu(self.fileMenu)
-        self.menuBar().addMenu(self.editMenu)
-        #self.setMenuBar(self.__menuBar)
+            self.menuBar().addMenu(m)
 
         self.resize(800, 600)
         self.setWindowTitle(filename)
@@ -78,6 +87,9 @@ class MainWindow(QtGui.QMainWindow):
     def doUndo(self):
         self.datastore.cmdlist.rewind(1)
         self.disassemblyWidget.update()
+
+    def doRedo(self):
+        pass
 
     def doAddBinary(self, addr):
         # FIXME: use command pattern
@@ -98,3 +110,28 @@ class MainWindow(QtGui.QMainWindow):
         filename, filter = QtGui.QFileDialog.getOpenFileName()
         if filename:
             applogic.tools_loaders.addIHex(self.datastore, filename)
+
+    # Loads a json-format set of properties
+    # Useful for importing from other tools, or when the DB format
+    # has been very much broken
+    def doAddProps(self, ident):
+        filename, filter = QtGui.QFileDialog.getOpenFileName()
+        if not filename:
+            return
+        ostruct = json.load(open(filename))
+
+        c = CompoundCommand()
+
+        for k, v in ostruct.iteritems():
+            ident = int(k, 0)
+            for setting, val in v.iteritems():
+                if setting == "label":
+                    c.add(SymbolNameCommand(ident, val))
+                elif setting == "comment":
+                    c.add(CommentCommand(ident,
+                        CommentPosition.POSITION_RIGHT, val))
+
+        self.datastore.cmdlist.push(c)
+
+    def doSaveProps(self, addr):
+        pass
