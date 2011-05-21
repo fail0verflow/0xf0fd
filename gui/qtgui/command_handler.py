@@ -82,6 +82,8 @@ class CommandHandler(object):
 
     def handleFollowJump(self, addr):
         newaddr = applogic.tools.follow(self.ds, addr)
+        if not newaddr:
+            return
 
         rc, obj = self.ds.infostore.lookup(addr)
 
