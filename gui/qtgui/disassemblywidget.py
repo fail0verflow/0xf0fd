@@ -60,11 +60,15 @@ class DisassemblyWidget(QtGui.QAbstractScrollArea):
 
     def keyPressEvent(self, evt):
         reserved_keys = []
+        try:
+            key = evt.k
+        except AttributeError:
+            key = evt.key()
 
-        if evt.k in reserved_keys:
+        if key in reserved_keys:
             super(DisassemblyWidget, self).keyPressEvent(evt)
         else:
-            if evt.k == QtCore.Qt.Key_Down:
+            if key == QtCore.Qt.Key_Down:
                 selected_addr = self.view.getSelAddr()
                 rc, obj = self.user_proxy.infostore.lookup(selected_addr)
                 if rc != InfoStore.LKUP_OK:
@@ -74,7 +78,7 @@ class DisassemblyWidget(QtGui.QAbstractScrollArea):
 
                 self.view.setSelAddr(next_addr)
 
-            elif evt.k == QtCore.Qt.Key_Up:
+            elif key == QtCore.Qt.Key_Up:
                 selected_addr = self.view.getSelAddr()
                 next_addr = self.user_proxy.infostore.findStartForAddress(
                     selected_addr - 1)
@@ -88,7 +92,7 @@ class DisassemblyWidget(QtGui.QAbstractScrollArea):
                 self.view.setSelAddr(next_addr)
 
             else:
-                self.ch.handleCommand(self.view.getSelAddr(), evt.k)
+                self.ch.handleCommand(self.view.getSelAddr(), key)
                 self.view.update()
                 self.ds.flush()
 

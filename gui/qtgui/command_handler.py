@@ -14,6 +14,30 @@ keyList = dict([(getattr(QtCore.Qt, key), key)
     for key in dir(QtCore.Qt) if key.startswith('Key')])
 
 
+class CommentEntryTextField(QtGui.QTextEdit):
+
+    # Signal that indicates magic-exit keystroke was entered
+    # to terminate dialog
+    magicExitPressed = QtCore.Signal()
+
+    def __init__(self, *args, **kwargs):
+        QtGui.QTextEdit.__init__(self, *args, **kwargs)
+
+    def keyPressEvent(self, evt):
+
+        # Check for control-enter or command-enter
+        if evt.key() in (QtCore.Qt.Key_Enter, QtCore.Qt.Key_Return) and \
+            evt.modifiers() & (QtCore.Qt.ControlModifier |
+                    QtCore.Qt.MetaModifier):
+
+            # If control or command enter, emit our "magic exit" event to
+            # terminate the dialog
+            self.magicExitPressed.emit()
+            return
+
+        super(CommentEntryTextField, self).keyPressEvent(evt)
+
+
 class AddCommentWindow(QtGui.QDialog):
     def __init__(self, position, oldcomment):
         super(AddCommentWindow, self).__init__()
@@ -34,7 +58,10 @@ class AddCommentWindow(QtGui.QDialog):
 
         self.formLayout = QtGui.QFormLayout()
         self.positionLabel = QtGui.QLabel(positionText)
-        self.edit = QtGui.QTextEdit(oldcomment)
+        self.edit = CommentEntryTextField(oldcomment)
+
+        QtCore.QObject.connect(self.edit,
+            QtCore.SIGNAL('magicExitPressed()'), self.accept)
 
         self.formLayout.addRow("&Position:", self.positionLabel)
         self.formLayout.addRow("&Comment text:", self.edit)
@@ -50,8 +77,10 @@ class CommandHandler(object):
         oldcomment = self.ds.comments.getCommentText(ident, pos)
 
         cw = AddCommentWindow(pos, oldcomment)
-        cw.exec_()
-        self.ds.cmdlist.push(CommentCommand(ident, pos, cw.edit.toPlainText()))
+        rescode = cw.exec_()
+        if rescode:
+            self.ds.cmdlist.push(
+                    CommentCommand(ident, pos, cw.edit.toPlainText()))
 
     def handleInspect(self, ident):
         rc, info = self.ds.infostore.lookup(ident)
