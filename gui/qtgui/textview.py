@@ -152,11 +152,29 @@ class FDTextArea(object):
             except KeyError:
                 pass
 
+            blocks.sort(lambda a, b: cmp(a.col, b.col))
+
+            lastcol = 0
+
             for block in blocks:
                 attribs = block.attribs
-                block_start_x = self.x_0 + self.c_width * block.col
+
+                st_col = max(block.col, lastcol)
+
+                # Insert an extra column when we had overlapping blocks
+                # Overlapping text blocks are never an intentional input
+                # condition. When they occur, something was configured wrong
+                # and rendering usually looks best with space before the next
+                # char
+                if st_col > block.col:
+                    st_col += 1
+
+                block_start_x = self.x_0 + self.c_width * st_col
                 block_end_x = self.x_0 + self.c_width * (
-                    block.col + len(block.text))
+                    st_col + len(block.text))
+
+                lastcol = max(st_col + len(block.text), st_col)
+
                 block_width = self.c_width * len(block.text)
 
                 p.setFont(self.font)
