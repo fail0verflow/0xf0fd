@@ -1,6 +1,10 @@
 from PySide import QtGui, QtCore
 
 from subviewmgr import SubViewManager
+
+# Force SubViews to be loaded
+import subviews
+
 from disassemblywidget import DisassemblyWidget
 
 from datastore.dbtypes import CommentPosition
