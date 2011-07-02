@@ -6,7 +6,8 @@ class SubViewManager(object):
     def __init__(self, mainwin):
         self.__mw = mainwin
 
-        self.svl = [i(self, self.__mw) for i in SubViewBase.__subclasses__()]
+        self.svl = [i(self, self.__mw) for i in
+                SubViewEntryBase.__subclasses__()]
 
         self.viewmenu = QtGui.QMenu("View", self.__mw)
 
@@ -28,7 +29,7 @@ class SubViewManager(object):
             i.show()
 
 
-class SubViewBase(object):
+class SubViewEntryBase(object):
     def __init__(self, svm, mw):
         self._svm = svm
         self._mw = mw

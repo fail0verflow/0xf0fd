@@ -1,11 +1,11 @@
 from symbolwidget import SymbolWidget
 
-from subviewmgr import SubViewBase
+from subviewmgr import SubViewEntryBase
 
 from PySide import QtCore
 
 
-class SymbolWidgetSubViewEntry(SubViewBase):
+class SymbolWidgetSubViewEntry(SubViewEntryBase):
     menuname = "Symbols"
     defaultArea = QtCore.Qt.LeftDockWidgetArea
 
