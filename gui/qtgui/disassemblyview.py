@@ -43,6 +43,10 @@ class DisassemblyGraphicsView(QtGui.QWidget):
         # Used for drawing arrows
         self.addr_line_map = {}
 
+        # Used for line highlighting - tuple of first,
+        # last line that is at that address
+        self.highlight_addr_range = {}
+
         self.arrowWidth = 80
 
         self.atv = FDTextArea(
@@ -148,12 +152,44 @@ class DisassemblyGraphicsView(QtGui.QWidget):
     def calculateAddressLinecount(self, data):
         return calculateLineParameters(data)[0]
 
+    # Perform mock layout to calculate last fully drawn addr
+    def calculateLastFullyDrawnAddr(self, start=None):
+
+        line_ident = start if start else self.memaddr_top
+
+        nlines = self.atv.nlines
+        i = 0
+
+        lastDrawnAddr = None
+
+        # NOTE: Keep in sync with draw routine below; or create line
+        # orientation generator
+        while i < nlines:
+            rc, line_data = self.ds.infostore.lookup(line_ident)
+
+            if rc != InfoStore.LKUP_OK:
+                line_ident += 1
+                i += 1
+                continue
+
+            lines_needed, disasm_start, label_start, divider_start = \
+                self.calculateLineParameters(line_data)
+
+            i += lines_needed
+            if i < nlines:
+                lastDrawnAddr = line_ident
+
+            line_ident += line_data.length
+
+        return lastDrawnAddr
+
     def drawWidget(self, p):
         self.atv.clear()
         self.arv.clear()
 
         self.line_addr_map = {}
         self.addr_line_map = {}
+        self.highlight_addr_range = {}
 
         # Calculate maximum number of lines on the screen
         nlines = self.atv.nlines
@@ -251,6 +287,16 @@ class DisassemblyGraphicsView(QtGui.QWidget):
 
             self.addr_line_map[line_ident] = disasm_start + i
 
+            # Calculate a range that covers the actual range that has displayed
+            # content for highlighting purposes
+            line_end = i + lines_needed
+
+            if divider_start:
+                line_end = i + divider_start
+
+            self.highlight_addr_range[line_ident] = (i + label_start,
+                line_end)
+
             # Add addr to disasm
             try:
                 for arrow in [
@@ -304,16 +350,20 @@ class DisassemblyGraphicsView(QtGui.QWidget):
                     "-" * 60,
                     self.getStyle(STYLE_DIVIDER))
 
-            line_ident += line_data.length
             i += lines_needed
+            if i < nlines:
+                self.lastDrawnAddr = line_ident
+
+            line_ident += line_data.length
             i_mod += 1
 
         try:
-            selection_line = self.addr_line_map[self.memaddr_selected]
+            selection_line = self.highlight_addr_range[self.memaddr_selected]
         except KeyError:
             pass
         else:
-            self.atv.setRowHighlight(selection_line, self.sel_color)
+            for line_i in xrange(selection_line[0], selection_line[1]):
+                self.atv.setRowHighlight(line_i, self.sel_color)
 
         self.arv.setSelectedAddr(self.memaddr_selected)
 

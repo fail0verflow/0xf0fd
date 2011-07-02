@@ -78,6 +78,21 @@ class DisassemblyWidget(QtGui.QAbstractScrollArea):
 
                 self.view.setSelAddr(next_addr)
 
+                ad = self.view.getTopAddr()
+                if next_addr > self.view.lastDrawnAddr:
+                    while next_addr > self.view. \
+                            calculateLastFullyDrawnAddr(ad):
+
+                        to_rc, top_obj = self.user_proxy. \
+                            infostore.lookup(ad)
+
+                        if to_rc != InfoStore.LKUP_OK:
+                            return
+
+                        ad += top_obj.length
+
+                    self.view.setTopAddr(ad)
+
             elif key == QtCore.Qt.Key_Up:
                 selected_addr = self.view.getSelAddr()
                 next_addr = self.user_proxy.infostore.findStartForAddress(
