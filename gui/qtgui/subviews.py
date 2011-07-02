@@ -1,5 +1,5 @@
 from symbolwidget import SymbolWidget
-
+from consolewidget import ConsoleSubView
 from subviewmgr import SubViewEntryBase
 
 from PySide import QtCore
@@ -20,5 +20,15 @@ class SymbolWidgetSubViewEntry(SubViewEntryBase):
 
         self._widget.widget.symbolSelected.connect(
             self._mw.disassemblyWidget.gotoIdentSL)
+
+        self._widget.closed.connect(self.onClose)
+
+
+class ConsoleWidgetSubViewEntry(SubViewEntryBase):
+    menuname = "Console"
+    defaultArea = QtCore.Qt.BottomDockWidgetArea
+
+    def instantiateWidget(self):
+        self._widget = ConsoleSubView(self._mw, self._mw.datastore)
 
         self._widget.closed.connect(self.onClose)
