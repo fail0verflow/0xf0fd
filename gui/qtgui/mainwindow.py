@@ -116,7 +116,7 @@ class MainWindow(QtGui.QMainWindow):
     # Loads a json-format set of properties
     # Useful for importing from other tools, or when the DB format
     # has been very much broken
-    def doAddProps(self, ident):
+    def doAddProps(self):
         filename, filter = QtGui.QFileDialog.getOpenFileName()
         if not filename:
             return
@@ -135,5 +135,5 @@ class MainWindow(QtGui.QMainWindow):
 
         self.datastore.cmdlist.push(c)
 
-    def doSaveProps(self, addr):
-        pass
+    def doSaveProps(self):
+        raise NotImplementedError("Save Props not implemented")
