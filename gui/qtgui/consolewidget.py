@@ -111,7 +111,7 @@ class ConsoleWidget(QtGui.QWidget):
 
         self.setLayout(self.layout)
 
-        self.hist_index = 0
+        self.hist_index = -1
         self.last_press = None
 
     def sizeHint(self):
@@ -136,13 +136,15 @@ class ConsoleWidget(QtGui.QWidget):
         self.hist_index = min(self.hist_index + 1, len(self.history) - 1)
 
         if self.history:
-            self.entry.setText(self.history[self.hist_index])
+            self.entry.setText(self.history[
+                len(self.history) - self.hist_index - 1])
 
     def keyDownPressed(self):
         self.hist_index = max(self.hist_index - 1, -1)
 
         if self.hist_index >= 0 and self.history:
-            self.entry.setText(self.history[self.hist_index])
+            self.entry.setText(self.history[
+                len(self.history) - self.hist_index - 1])
         elif self.hist_index == -1:
             self.entry.setText('')
 
