@@ -7,6 +7,7 @@ from PySide import QtCore, QtGui
 from datastore import DataStore
 from arch.shared_opcode_types import *
 from applogic.defaultmockproxy import DefaultMockProxy
+import applogic.tools
 
 from mainwindow import MainWindow
 import arch
@@ -85,7 +86,7 @@ class QTGui(object):
     def newWithArchCallback(self, archname):
         self.global_archname = archname
 
-        self.ds = DataStore(self.filename, arch.getDecoder)
+        self.ds = DataStore(self.filename, applogic.tools.typeFactory)
         self.user_ds = DefaultMockProxy(self.ds)
 
         self.ds.properties.set("f0fd.HACK_arch_name", archname)
@@ -112,7 +113,7 @@ class QTGui(object):
             apw.show()
         else:
             # File exists, make sure the architecture type is properly set
-            self.ds = DataStore(self.filename, arch.getDecoder)
+            self.ds = DataStore(self.filename, applogic.tools.typeFactory)
             self.user_ds = DefaultMockProxy(self.ds)
             try:
                 self.global_archname = \

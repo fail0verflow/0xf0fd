@@ -51,13 +51,13 @@ def loadMachineModules():
     my_path = os.path.dirname(__file__)
     ignores = ["common"]
     this_dir = [i for i in os.listdir(my_path) if os.path.isdir(my_path +"/"+ i) and i not in ignores]
-    
+
     for arch_modname in this_dir:
         try:
             toplevel = __import__(__name__ + "." + arch_modname)
             module = getattr(toplevel,arch_modname)
             try:
-                
+
                 machine_list.update([ (machine.shortname, machine) for machine in module.machines ] )
             except AttributeError:
                 print "Error - could not find machine list for machine %s" % arch_modname
@@ -73,7 +73,11 @@ def machineFactory(datastore, archname):
     global machine_list
     if not machine_list:
         machine_list = loadMachineModules()
-    return machine_list[archname](datastore)
+
+    try:
+        return machine_list[archname](datastore)
+    except KeyError:
+        return None
 
 def machineNames():
     global machine_list

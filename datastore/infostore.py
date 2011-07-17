@@ -141,7 +141,12 @@ class InfoStore(object):
                     }
 
             obj = MemoryInfo.createFromParams(
-                self.__parent, row[0], row[1], row[3], row[2], params)
+                self.__parent, row[0], row[1],
+                str(row[3]), str(row[2]), params)
+
+            if not obj:
+                print "Warning - Potentially missing datatype:", row[3]
+                return self.LKUP_NONE, None
 
             obj.ds_link = self.__changed
 

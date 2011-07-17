@@ -1,0 +1,2 @@
+class DecodeTypeBase(object):
+    pass

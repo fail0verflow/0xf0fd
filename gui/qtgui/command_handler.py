@@ -69,6 +69,11 @@ class CommandHandler(object):
 
         self.view.gotoIdent(newaddr)
 
+    # Create ascii string command
+    def handleAscii(self, addr):
+        s = SetTypeCommand(addr, 'ascii')
+        self.ds.cmdlist.push(s)
+
     # Go back in the memory stack
     def handleCodeReturn(self, addr):
         try:
@@ -101,6 +106,7 @@ class CommandHandler(object):
             ("I", "Inspect"),
             ("C", "CodeFollow"),
             ('U', "Undefine"),
+            ('A', "Ascii"),
             ("Return", "FollowJump"),
             ("N", "SetLabel"),
             ("Backspace", "CodeReturn"),

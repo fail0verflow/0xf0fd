@@ -1,6 +1,8 @@
 from datastore.dbtypes import CommentPosition
 from datastore.infostore import InfoStore
 
+from applogic.tools import typeFactory
+
 
 class BaseCommand(object):
     def __init__(self):
@@ -31,9 +33,6 @@ class SetTypeCommand(BaseCommand):
         self.__dtn = dtype_name
         self.__type_len = type_len
 
-        # HACK: This should be optional, need to fix typesystem first
-        assert not dtype_name or type_len != None
-
         # Ensure we don't have a long remove
         assert dtype_name or type_len == None
 
@@ -48,6 +47,16 @@ class SetTypeCommand(BaseCommand):
 
     def execute(self, datastore):
         BaseCommand.execute(self)
+
+        # If we don't know the length beforehand, calculate it
+        if self.__dtn and self.__type_len == None:
+            d = typeFactory(datastore, self.__dtn)
+            assert d
+
+            insn = d.disassemble(self.__ident)
+            assert insn
+
+            self.__type_len = insn.length()
 
         # Backup existing typenames
         self.__bk = [self.doLU(datastore, i) for i in xrange(self.__ident,

@@ -29,6 +29,10 @@ class MemoryInfo(object):
     def createForTypeName(ds, addr, typename):
         """ Create an MemoryInfo object, given only the desired typename"""
         decoder = ds.decoder_lookup(ds, typename)
+
+        if not decoder:
+            return None
+
         decoded = decoder.disassemble(addr, saved_params=None)
         m = MemoryInfo(
                 ds=ds,
@@ -50,6 +54,9 @@ class MemoryInfo(object):
             saved_params = {}
 
         decoder = ds.decoder_lookup(ds, typename)
+
+        if not decoder:
+            return None
 
         decoded = decoder.disassemble(addr, saved_params=saved_params)
         assert decoded.length() == length

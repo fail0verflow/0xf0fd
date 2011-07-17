@@ -1,7 +1,5 @@
 from datastore.dbtypes import *
 from datastore.infostore import InfoStore
-from datastore import DataStore
-from applogic.cmd import CompoundCommand, SetTypeCommand
 import arch
 
 
@@ -22,6 +20,7 @@ def rebuildXrefs(ds):
 
 # entry_point is an ident
 def codeFollow(ds, arch_name, entry_point):
+    from applogic.cmd import CompoundCommand, SetTypeCommand
     cc = CompoundCommand()
 
     from types import FunctionType
