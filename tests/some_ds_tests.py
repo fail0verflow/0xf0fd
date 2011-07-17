@@ -217,4 +217,18 @@ class miscTestCases(unittest.TestCase):
 
         self.assertRaises(NotImplementedError, _call)
 
+    def test_xrefStore(self):
+        ds = DataStore(":memory:")
+
+        xrs = ds.xreflist
+
+        xrs.addXref(4, 8, xrs.XREF_CODE)
+        xrs.addXref(9, 4, xrs.XREF_CODE)
+
+        a1 = xrs.getXrefsTo(8)
+        a2 = xrs.getXrefsFrom(4)
+
+        self.assertEquals(len(a1), 1)
+        self.assertEquals(len(a2), 1)
+
 suite = unittest.TestLoader().loadTestsFromTestCase(miscTestCases)

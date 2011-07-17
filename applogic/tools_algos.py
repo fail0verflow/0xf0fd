@@ -5,6 +5,21 @@ from applogic.cmd import CompoundCommand, SetTypeCommand
 import arch
 
 
+def rebuildXrefs(ds):
+    xrs = ds.xreflist
+    xrs.clearXrefs()
+
+    for insn in ds.infostore:
+        segment = ds.segments.findSegment(insn.addr)
+        for dest in (segment.mapOut(i) for i, _ in insn.disasm.dests()):
+
+            # No xrefs for next-instruction flow
+            if dest == insn.addr + insn.length:
+                continue
+
+            xrs.addXref(insn.addr, dest, xrs.XREF_CODE)  # HACK, always code
+
+
 # entry_point is an ident
 def codeFollow(ds, arch_name, entry_point):
     cc = CompoundCommand()

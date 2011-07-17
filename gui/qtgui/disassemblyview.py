@@ -15,6 +15,7 @@ STYLE_COMMENT = 0x80002
 STYLE_OPCODE = 0x80003
 STYLE_DIVIDER = 0x80008
 STYLE_INTERNALERROR = 0x80009
+STYLE_XREF = 0x8000A
 
 TA = FDTextAttribs
 
@@ -25,6 +26,7 @@ class DisassemblyGraphicsView(QtGui.QWidget):
 
         self.addrX = 0
         self.labelX = 18
+        self.xrefX = 40
         self.disasmX = 20
         self.firstOpcodeX = 31
         self.commentX = 56
@@ -97,6 +99,7 @@ class DisassemblyGraphicsView(QtGui.QWidget):
         fg_col = QtGui.QColor(0, 0, 0)
         comment_col = QtGui.QColor(127, 127, 127)
         opcode_col = QtGui.QColor(0, 0, 127)
+        xref_col = QtGui.QColor(80, 80, 187)
         divider_col = QtGui.QColor(180, 180, 180)
 
         if styleType == TYPE_SYMBOLIC:
@@ -104,6 +107,9 @@ class DisassemblyGraphicsView(QtGui.QWidget):
 
         elif styleType == STYLE_COMMENT:
             return TA(color=comment_col)
+
+        elif styleType == STYLE_XREF:
+            return TA(color=xref_col)
 
         elif styleType == STYLE_OPCODE:
             return TA(color=opcode_col)
@@ -129,17 +135,28 @@ class DisassemblyGraphicsView(QtGui.QWidget):
         label_start = 0
         divider_start = None
 
+        n_max_xrefs = 3
+
+        n_xref_lines = min(n_max_xrefs,
+                len(self.ds.xreflist.getXrefsTo(data.addr)))
+
+        lines_needed += n_xref_lines
+        disasm_start += n_xref_lines
+        label_start += n_xref_lines
+
         if data.label:
             lines_needed += 2
             disasm_start += 2
-            label_start = 1
+            label_start += 1
 
         try:
+            # Calculate dest idents
             segment = self.ds.segments.findSegment(data.addr)
             dests = [
                 (self.mapDest(segment, i), j)
                 for i, j in data.disasm.dests()]
 
+            # Space for a divider if code execution completes
             if data.addr + data.length not in [i for i, _ in dests]:
                 lines_needed += 2
                 divider_start = disasm_start + 1
@@ -147,7 +164,8 @@ class DisassemblyGraphicsView(QtGui.QWidget):
         except AttributeError:
             pass
 
-        return lines_needed, disasm_start, label_start, divider_start
+        return (lines_needed, disasm_start, label_start, divider_start,
+                    n_xref_lines)
 
     def calculateAddressLinecount(self, data):
         return calculateLineParameters(data)[0]
@@ -172,7 +190,8 @@ class DisassemblyGraphicsView(QtGui.QWidget):
                 i += 1
                 continue
 
-            lines_needed, disasm_start, label_start, divider_start = \
+            (lines_needed, disasm_start, label_start,
+                    divider_start, n_xref_lines) = \
                 self.calculateLineParameters(line_data)
 
             i += lines_needed
@@ -254,9 +273,44 @@ class DisassemblyGraphicsView(QtGui.QWidget):
             #   0002
             #
             #
-            lines_needed, disasm_start, label_start, divider_start = \
+            (lines_needed, disasm_start, label_start,
+                    divider_start, n_xref_lines) = \
                 self.calculateLineParameters(line_data)
             label = line_data.label
+
+            # Draw the xrefs
+            xrefs = self.ds.xreflist.getXrefsTo(line_data.addr)
+
+            xreflbl = "Xrefs: "
+            for xi in xrange(0, n_xref_lines):
+
+                # Lookup the xref source to get a name
+                _, dxr = self.ds.infostore.lookup(xrefs[xi].ident_from)
+                xreftext = None  # dxr.label
+
+                if not xreftext:
+                    dxrseg = self.ds.segments.findSegment(dxr.addr)
+                    if not dxrseg:
+                        xreftext = "%x" % dxr.addr
+                    else:
+                        if dxrseg.name:
+                            xreftext = "%s:%x" % (dxrseg.name,
+                                dxrseg.mapIn(dxr.addr))
+                        else:
+                            xreftext = "%x" % dxrseg.mapIn(dxr.addr)
+
+                if i == 0:
+                    self.atv.addText(
+                        i + xi + 1,
+                        self.xrefX + len(xreflbl),
+                        xreftext,
+                        self.getStyle(STYLE_XREF))
+                else:
+                    self.atv.addText(
+                        i + xi + 1,
+                        self.xrefX,
+                        xreflbl + xreftext,
+                        self.getStyle(STYLE_XREF))
 
             # draw the label [if any]
             if label:

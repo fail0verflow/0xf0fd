@@ -36,6 +36,10 @@ class InfoStore(object):
                  typename   VARCHAR(100),
                  obj        BLOB )''')
 
+    def __len__(self):
+        return self.c.execute('''SELECT count(addr)
+                                 FROM memory_info''').fetchone()[0]
+
     def __iter__(self):
         self.flushInsertQueue()
 

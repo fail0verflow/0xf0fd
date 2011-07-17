@@ -6,6 +6,8 @@ from symbollist import *
 from segmentlist import *
 from fsignal_thunk import *
 from infostore import InfoStore
+from xreflist import XrefList
+
 from applogic.command_list import CommandList
 from dbtypes import *
 
@@ -33,6 +35,7 @@ class DataStore(object):
         self.cmdlist = CommandList(self)
         self.segments = SegmentList(self.conn, self)
         self.infostore = InfoStore(self)
+        self.xreflist = XrefList(self)
 
         self.properties = Properties(self.conn)
 
