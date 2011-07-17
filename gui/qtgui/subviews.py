@@ -32,3 +32,5 @@ class ConsoleWidgetSubViewEntry(SubViewEntryBase):
         self._widget = ConsoleSubView(self._mw, self._mw.datastore)
 
         self._widget.closed.connect(self.onClose)
+        self._widget.widget.actionOccurred.connect(
+                self._mw.disassemblyWidget.update)

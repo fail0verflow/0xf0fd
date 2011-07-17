@@ -78,6 +78,7 @@ class MyLineEdit(QtGui.QLineEdit):
 
 
 class ConsoleWidget(QtGui.QWidget):
+    actionOccurred = QtCore.Signal()
 
     def __init__(self, parent_win, ds):
         super(ConsoleWidget, self).__init__()
@@ -122,7 +123,7 @@ class ConsoleWidget(QtGui.QWidget):
             self.output.append(v.strip())
 
     def returnPressed(self):
-        self.hist_index = 0
+        self.hist_index = -1
         t = self.entry.text().strip()
         self.history.append(t)
 
@@ -131,6 +132,8 @@ class ConsoleWidget(QtGui.QWidget):
             self.cons.push(t)
 
         self.entry.clear()
+
+        self.actionOccurred.emit()
 
     def keyUpPressed(self):
         self.hist_index = min(self.hist_index + 1, len(self.history) - 1)
