@@ -16,7 +16,7 @@ class i8051MachineInstruction(MachineInstruction):
     def __repr__(self):
         res = self.mnemonic + " "
         for op in self.operands:
-            res += op.render(None)
+            res += op.render(None)[0]
         return res
 
     def length(self):
@@ -25,7 +25,9 @@ class i8051MachineInstruction(MachineInstruction):
     def dests(self):
         return self.__dests
 
-MIB = get_MachineInstructionBuilder('arch.i8051.machine',i8051MachineInstruction)
+MIB = get_MachineInstructionBuilder('arch.i8051.machine',
+        i8051MachineInstruction)
+
 
 def i8051Adaptor(id, bytes):
     rv = opcode_8051.decode_bytes(id, bytes)
@@ -47,10 +49,11 @@ def i8051Adaptor(id, bytes):
     except KeyError:
         dests_call = []
 
-    dests = [(i, REL_JUMP) for i in dests_jmp] + [(i, REL_CALL) for i in dests_call]
+    dests = [(i, REL_JUMP) for i in dests_jmp] + \
+            [(i, REL_CALL) for i in dests_call]
 
     return MIB(disasm.opcode, None)(
-        length,dests, *disasm.operands)
+        length, dests, *disasm.operands)
 
 
 class i8051Machine(object):
@@ -61,7 +64,7 @@ class i8051Machine(object):
 
     def __init__(self, datastore):
         self.datastore = datastore
-    
+
     # All refs in returned disassembly are segment-rel!
     def disassemble(self, id, saved_params=None):
         bytes = self.datastore.readBytes(id, 5)
@@ -69,5 +72,4 @@ class i8051Machine(object):
         reladdr = self.datastore.segments.findSegment(id).mapIn(id)
         return i8051Adaptor(reladdr, bytes)
 
-machines = [i8051Machine]   
-
+machines = [i8051Machine]
