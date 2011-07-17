@@ -49,6 +49,19 @@ class CommandHandler(object):
         if ok and text != oldlabel:
             self.ds.cmdlist.push(SymbolNameCommand(ident, text))
 
+    def handleXrefs(self, addr):
+        ds = self.ds
+
+        xrefs_to = ds.xreflist.getXrefsTo(addr)
+        if not xrefs_to:
+            return
+
+        d = XrefSelectionWindow(ds, xrefs_to)
+        rc = d.exec_()
+
+        if rc:
+            self.view.gotoIdent(d.getSelectedAddr())
+
     def handleCodeFollow(self, addr):
         # Compound command created within codeFollow primitive
         a = self.gui.global_archname
@@ -107,6 +120,7 @@ class CommandHandler(object):
             ("C", "CodeFollow"),
             ('U', "Undefine"),
             ('A', "Ascii"),
+            ('X', "Xrefs"),
             ("Return", "FollowJump"),
             ("N", "SetLabel"),
             ("Backspace", "CodeReturn"),
