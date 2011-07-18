@@ -60,7 +60,7 @@ class CommandHandler(object):
         rc = d.exec_()
 
         if rc:
-            self.view.gotoIdent(d.getSelectedAddr())
+            self.view.navigateToIdent(d.getSelectedAddr())
 
     def handleCodeFollow(self, addr):
         # Compound command created within codeFollow primitive
@@ -77,10 +77,7 @@ class CommandHandler(object):
         if rc != self.ds.infostore.LKUP_OK:
             return
 
-        self.memstack.append(
-            (self.view.view.getTopAddr(), self.view.view.getSelAddr()))
-
-        self.view.gotoIdent(newaddr)
+        self.view.navigateToIdent(newaddr)
 
     # Create ascii string command
     def handleAscii(self, addr):
@@ -90,11 +87,11 @@ class CommandHandler(object):
     # Go back in the memory stack
     def handleCodeReturn(self, addr):
         try:
-            top, sel = self.memstack.pop()
+            top, sel = self.view.memstack.pop()
         except IndexError:
             return
 
-        self.view.gotoIdent(sel, top)
+        self.view.setTopSelectedIdent(sel, top)
 
     def handleUndefine(self, ident):
         self.ds.cmdlist.push(SetTypeCommand(ident, None))
@@ -112,7 +109,6 @@ class CommandHandler(object):
         self.gui = gui
         self.iws = []
         self.ds = ds
-        self.memstack = []
         self.view = view
 
         handlers = [

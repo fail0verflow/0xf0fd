@@ -36,6 +36,8 @@ class DisassemblyWidget(QtGui.QAbstractScrollArea):
         super(DisassemblyWidget, self).__init__(parent)
         self.window_up = parent
 
+        self.memstack = []
+
         self.sm = SegmentLineMapper(user_proxy)
         self.user_proxy = user_proxy
         self.ds = ds
@@ -95,12 +97,15 @@ class DisassemblyWidget(QtGui.QAbstractScrollArea):
 
             elif key == QtCore.Qt.Key_Up:
                 selected_addr = self.view.getSelAddr()
+
                 next_addr = self.user_proxy.infostore.findStartForAddress(
                     selected_addr - 1)
 
                 if next_addr == None:
                     return
 
+                # rewind view to prev line if selected line is outside of shown
+                # area
                 if next_addr < self.view.getTopAddr():
                     self.view.setTopAddr(next_addr)
 
@@ -114,12 +119,30 @@ class DisassemblyWidget(QtGui.QAbstractScrollArea):
     def update(self):
         self.view.update()
 
+    # With silly tuple hack to work around PySide bugs
+    @QtCore.Slot(tuple)
+    def navigateToIdentSL(self, val):
+        self.navigateToIdent(val[0])
+
+    # 'Nice' navigation; attempt to select ident if it's already onscreen
+    # or jump to the ident if it's offscreen
+    # Also, track memory stack movements
+    def navigateToIdent(self, val, supress_memstack=False):
+        if not supress_memstack:
+            self.memstack.append(
+                (self.view.getTopAddr(), self.view.getSelAddr()))
+
+        if val <= self.view.lastDrawnAddr and val >= self.view.getTopAddr():
+            self.view.setSelAddr(val)
+        else:
+            self.setTopSelectedIdent(val)
+
     # Hack to work around Pyside forcing longs->ints
     @QtCore.Slot(tuple)
-    def gotoIdentSL(self, tup):
-        self.gotoIdent(tup[0])
+    def setTopSelectedIdentSL(self, tup):
+        self.setTopSelectedIdent(tup[0])
 
-    def gotoIdent(self, val, top=None):
+    def setTopSelectedIdent(self, val, top=None):
         if top == None:
             top = val
 

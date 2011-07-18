@@ -19,7 +19,7 @@ class SymbolWidgetSubViewEntry(SubViewEntryBase):
         self._widget = SymbolWidget(self._mw, self._mw.datastore)
 
         self._widget.widget.symbolSelected.connect(
-            self._mw.disassemblyWidget.gotoIdentSL)
+            self._mw.disassemblyWidget.navigateToIdentSL)
 
         self._widget.closed.connect(self.onClose)
 
