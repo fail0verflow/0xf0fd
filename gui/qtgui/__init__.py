@@ -83,6 +83,9 @@ class QTGui(object):
         mainWin = MainWindow(self, self.filename)
         mainWin.show()
 
+    def engineSetupCompletion(self):
+        applogic.tools.registerFunctionality(self.ds)
+
     def newWithArchCallback(self, archname):
         self.global_archname = archname
 
@@ -90,6 +93,7 @@ class QTGui(object):
         self.user_ds = DefaultMockProxy(self.ds)
 
         self.ds.properties.set("f0fd.HACK_arch_name", archname)
+        self.engineSetupCompletion()
         self.createMainWindow()
 
     def runShowCallBack(self, archname):
@@ -118,6 +122,8 @@ class QTGui(object):
             try:
                 self.global_archname = \
                     self.ds.properties.get("f0fd.HACK_arch_name")
+
+                self.engineSetupCompletion()
                 self.createMainWindow()
 
             except KeyError:

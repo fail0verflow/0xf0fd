@@ -1,8 +1,12 @@
 from cPickle import dumps, loads
 from dbtypes import MemoryInfo
+from fsignal_thunk import *
 
 
 class InfoStore(object):
+    INF_CHG_ALTER = 1
+    INF_CHG_DEL = 2
+
     def __init__(self, parent):
         self.__parent = parent
 
@@ -25,6 +29,8 @@ class InfoStore(object):
         self.meminfo_misses = 0
         self.meminfo_fetches = 0
         self.meminfo_failures = 0
+
+        self.infoChanged = FSignal()
 
     def __createTables(self):
         # Attrs/obj is a dumped representation of a dict
@@ -186,6 +192,7 @@ class InfoStore(object):
 
         self.__queue_insert(ident, v)
 
+        self.infoChanged.emit(ident, self.INF_CHG_ALTER)
         return v
 
     def __queue_insert(self, ident, v):
@@ -212,6 +219,8 @@ class InfoStore(object):
         self.c.execute('''DELETE FROM memory_info WHERE addr=?''',
               (ident,))
 
+        self.infoChanged.emit(ident, self.INF_CHG_DEL)
+
     def __changed(self, ident, value):
         self.updates += 1
         self.flushInsertQueue()
@@ -221,6 +230,8 @@ class InfoStore(object):
                 typeclass=?, typename=?, obj=? WHERE ident=?''',
               (value.length, value.typeclass,
               value.typename, dumps(value.persist_attribs), ident))
+
+        self.infoChanged.emit(ident, self.INF_CHG_ALTER)
 
     def flushInsertQueue(self):
         params = []

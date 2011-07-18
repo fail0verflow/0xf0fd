@@ -26,7 +26,7 @@ class DisassemblyGraphicsView(QtGui.QWidget):
 
         self.addrX = 0
         self.labelX = 18
-        self.xrefX = 40
+        self.xrefX = 50
         self.disasmX = 20
         self.firstOpcodeX = 31
         self.commentX = 56
@@ -299,7 +299,7 @@ class DisassemblyGraphicsView(QtGui.QWidget):
                         else:
                             xreftext = "%x" % dxrseg.mapIn(dxr.addr)
 
-                if i == 0:
+                if xi != 0:
                     self.atv.addText(
                         i + xi + 1,
                         self.xrefX + len(xreflbl),

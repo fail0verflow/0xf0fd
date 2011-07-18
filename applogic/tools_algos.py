@@ -1,21 +1,53 @@
 from datastore.dbtypes import *
 from datastore.infostore import InfoStore
 import arch
+from arch.common.hacks import *
 
 
+# Attach hooks to notifications from datastore
+def registerFunctionality(ds):
+    registerXrefChangeTracker(ds)
+
+
+# Update Xref info cache when infostore changes
+def registerXrefChangeTracker(ds):
+    def xrefChangeTracker(ident, typ):
+        ds.xreflist.delXrefFrom(ident)
+
+        # If update is not a delete, rebuild the xrefs for the meminfo
+        if typ != ds.infostore.INF_CHG_DEL:
+            status, result = ds.infostore.lookup(ident)
+
+            if status == ds.infostore.LKUP_OK:
+                buildXrefForInfo(ds, result)
+
+    ds.infostore.infoChanged.connect(xrefChangeTracker)
+
+
+def buildXrefForInfo(ds, insn):
+    segment = ds.segments.findSegment(insn.addr)
+    for dest, typ in ((segment.mapOut(i), typ)
+            for i, typ in insn.disasm.dests()):
+
+        # No xrefs for next-instruction flow
+        if dest == insn.addr + insn.length:
+            continue
+
+        flags = ds.xreflist.XREF_CODE
+
+        if typ == REL_CALL:
+            flags |= ds.xreflist.XREF_CODE_CALL
+            print insn.addr, dest
+
+        ds.xreflist.addXref(insn.addr, dest, flags)  # HACK, always code
+
+
+# Manual Xref rebuild process
 def rebuildXrefs(ds):
-    xrs = ds.xreflist
-    xrs.clearXrefs()
+    ds.xreflist.clearXrefs()
 
     for insn in ds.infostore:
-        segment = ds.segments.findSegment(insn.addr)
-        for dest in (segment.mapOut(i) for i, _ in insn.disasm.dests()):
-
-            # No xrefs for next-instruction flow
-            if dest == insn.addr + insn.length:
-                continue
-
-            xrs.addXref(insn.addr, dest, xrs.XREF_CODE)  # HACK, always code
+        buildXrefForInfo(ds, insn)
 
 
 # entry_point is an ident
