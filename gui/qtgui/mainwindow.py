@@ -93,7 +93,7 @@ class MainWindow(QtGui.QMainWindow):
     def doRedo(self):
         pass
 
-    def doAddBinary(self, addr):
+    def doAddBinary(self):
         # FIXME: use command pattern
         filename, filter = QtGui.QFileDialog.getOpenFileName()
         if not filename:
@@ -107,7 +107,7 @@ class MainWindow(QtGui.QMainWindow):
         applogic.tools_loaders.addBinary(self.datastore,
             filename, base_addr, start_offset, length)
 
-    def doAddIHEX(self, addr):
+    def doAddIHEX(self):
         # FIXME: use command pattern
         filename, filter = QtGui.QFileDialog.getOpenFileName()
         if filename:
