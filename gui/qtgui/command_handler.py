@@ -37,7 +37,7 @@ class CommandHandler(object):
         self.iws += [iw]
 
     def handleSetLabel(self, ident):
-        if not ident:
+        if ident == None:
             return
 
         oldlabel = self.ds.symbols.getSymbol(ident)
