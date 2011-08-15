@@ -1,4 +1,3 @@
-from cmd import CompoundCommand
 
 
 class CommandList(object):
@@ -17,6 +16,7 @@ class CommandList(object):
         # Push all wrapped commands into a "CompoundCommand" so
         # they are undone as a block
 
+        from cmd import CompoundCommand
         s = CompoundCommand()
         self.wrap_stack.append(self.cmds)
         self.cmds = s.getInternalList()
