@@ -37,9 +37,14 @@ class AddBinaryPromptWindow(QtGui.QDialog):
         self.baseEdit = QtGui.QLineEdit("0x0")
         self.startEdit = QtGui.QLineEdit("0x0")
         self.lengthEdit = QtGui.QLineEdit("-1")
+        self.bitsEdit = QtGui.QLineEdit("8")
+
         self.formLayout.addRow("&Base Address:", self.baseEdit)
         self.formLayout.addRow("&Start Offset:", self.startEdit)
         self.formLayout.addRow("&Length:", self.lengthEdit)
+
+        self.formLayout.addRow("&bits per unit:", self.bitsEdit)
+
         self.formLayout.addWidget(buttonBox)
         self.setLayout(self.formLayout)
         self.setWindowModality(QtCore.Qt.ApplicationModal)
@@ -104,8 +109,10 @@ class MainWindow(QtGui.QMainWindow):
         base_addr = int(bpw.baseEdit.text(), 0)
         start_offset = int(bpw.startEdit.text(), 0)
         length = int(bpw.lengthEdit.text(), 0)
+        bits = int(bpw.bitsEdit.text(), 0)
+
         applogic.tools_loaders.addBinary(self.datastore,
-            filename, base_addr, start_offset, length)
+            filename, base_addr, start_offset, length, bits)
 
     def doAddIHEX(self):
         # FIXME: use command pattern

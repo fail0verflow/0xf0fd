@@ -1,22 +1,39 @@
 from datastore.dbtypes import *
 from datastore import SegmentList
 from arch.shared_mem_types import *
+import math
 
 
-# All addrs here are non-ident addresses
-def addBinary(ds, file, base_addr, start_offset, length, name=""):
+# All addrs here are segment-rel addresses
+def addBinary(ds, file, base_addr, start_offset, length, bits=8, name=""):
     # Load the file
+
+    # We assume little endian padding, aligned to byte sizes
+    # bits are packed within the unit right aligned
+    # IE, for a 14 bit unit:
+    #
+    # [0]bits7..0 [0]00bits14..8 [1]bits7..0 .....
+
+    n_bytes_per = int(math.ceil(bits / 8.))
+
     file_data = [ord(i) for i in open(file).read()]
+    end_offset = start_offset + length
+    file_data = file_data[start_offset:end_offset]
+
+    n_units = len(file_data) / n_bytes_per
+
+    # repack rows to match data
+    file_data = [reduce(lambda x, y: x << 8 | y,
+                        file_data[i:i + n_bytes_per][::-1])
+                 for i in xrange(0, len(file_data), n_bytes_per)]
 
     if length == -1:
-        end_offset = len(file_data)
-        dis_len = len(file_data) - start_offset
+        end_offset = n_units
     else:
         end_offset = start_offset + length
-        dis_len = length
 
-    ds.segments.addSegment(base_addr, end_offset - start_offset,
-        name, file_data[start_offset:end_offset])
+    ds.segments.addSegment(base_addr, len(file_data),
+        name, file_data, bits)
 
 
 def parseIhexLine(line):

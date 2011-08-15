@@ -4,6 +4,7 @@ from cPickle import *
 import zlib
 import sqlite3
 from array import array
+import util.pack_unpack_tools
 
 
 #
@@ -60,19 +61,25 @@ def defaultMapOut(seg_internal, seg):
 class SegmentList(object):
     class Segment(object):
         def __init__(self, start_addr, size, segno,
-            name, data, locationBitSize=8):
+            name, data, locationBitSize):
             # FIXME choose array type based on location bitsize
             # FIXME - also, data needs to be able to be indirectable
 
-            self.__data = array('B', data)
+            if locationBitSize <= 8:
+                atype = 'B'
+            elif locationBitSize <= 16:
+                atype = 'H'
+            elif locationBitSize <= 32:
+                atype = 'L'
+            else:
+                raise AssertionError("unimplemented bitsize")
+
+            self.__data = array(atype, data)
             self.__start_addr = start_addr
             self.__name = name
             self.__segno = segno
             self.__size = size
-
-            # FIXME: We don't have any processors that need this
-            # yet, but we will
-            assert locationBitSize == 8
+            self.__bits = locationBitSize
 
         # NOTE: Data packing / storage isn't guaranteed in this array
         # Only really for use by SegmentList
@@ -95,6 +102,10 @@ class SegmentList(object):
         def __getname(self):
             return self.__name
         name = property(__getname)
+
+        @property
+        def bitsize(self):
+            return self.__bits
 
         def readBytes(self, seg_internal_start, length=1):
             if (seg_internal_start < self.__start_addr or
@@ -149,14 +160,15 @@ class SegmentList(object):
         return self.segments_cache.__iter__()
 
     def __populateSegments(self):
-        for segno, start_addr, size, name, data in self.__conn.execute(
+        for segno, start_addr, size, name, data, bits in self.__conn.execute(
                 '''SELECT segno, start_addr,
-                size, name, data FROM segments'''):
+                size, name, data, bits_per_unit FROM segments'''):
 
             data = [ord(i) for i in zlib.decompress(data)]
+            data = util.pack_unpack_tools.byteListToInts(bits, data)
 
             self.segments_cache.append(
-                SegmentList.Segment(start_addr, size, segno, name, data))
+                SegmentList.Segment(start_addr, size, segno, name, data, bits))
 
     def findSegment(self, ident):
         for i in self.segments_cache:
@@ -175,27 +187,31 @@ class SegmentList(object):
                  start_addr INTEGER,
                  size INTEGER,
                  name STRING,
+                 bits_per_unit INTEGER,
                  data BLOB)''')
 
-    def addSegment(self, start_addr, size, name, data):
+    def addSegment(self, start_addr, size, name, data, bits=8):
         # Create a new segment number
         segno = (max(map(lambda x: x.seg_no, self.segments_cache)) +
             1 if self.segments_cache else 0)
 
         # Create segment object
-        segment = SegmentList.Segment(start_addr, size, segno, name, data)
+        segment = SegmentList.Segment(start_addr, size,
+                segno, name, data, bits)
 
         # Add it to the list of segments
         self.segments_cache.append(segment)
 
+        packed_data = util.pack_unpack_tools.intsToByteList(
+                segment.bitsize, segment.data)
         dbstr = sqlite3.Binary(
-            zlib.compress("".join([chr(i) for i in segment.data])))
+            zlib.compress("".join([chr(i) for i in packed_data])))
 
         self.__conn.execute(
             '''INSERT INTO segments
-               (segno, start_addr, size, name, data)
-               VALUES (?,?,?,?,?)''',
+               (segno, start_addr, size, name, bits_per_unit, data)
+               VALUES (?,?,?,?,?,?)''',
             (segment.seg_no, segment.start_addr,
-            segment.size, segment.name, dbstr))
+            segment.size, segment.name, bits, dbstr))
 
         self.ds.layoutChanged()
