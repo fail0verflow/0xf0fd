@@ -1,4 +1,5 @@
 import time
+import traceback
 
 from PySide import QtCore, QtGui
 from arch.shared_opcode_types import *
@@ -369,7 +370,12 @@ class DisassemblyGraphicsView(QtGui.QWidget):
                 operand = line_data.disasm.operands[opcode_num]
                 last_operand = opcode_num == len(line_data.disasm.operands) - 1
 
-                text, opc_type = operand.render(self.ds, segment)
+                try:
+                    text, opc_type = operand.render(self.ds, segment)
+                except:
+                    traceback.print_exc()
+                    text = "ERROR"
+                    opc_type = STYLE_INTERNALERROR
 
                 opcode_text = text
                 self.atv.addText(i + disasm_start,
