@@ -2,6 +2,7 @@ from datastore.dbtypes import *
 from datastore.infostore import InfoStore
 import arch
 from arch.common.hacks import *
+import traceback
 
 
 # Attach hooks to notifications from datastore
@@ -88,6 +89,9 @@ def codeFollow(ds, arch_name, entry_point):
         try:
             insn = arch_info.disassemble(pc, None)
         except IOError:
+            continue
+        except Exception:
+            traceback.print_exc()
             continue
 
         # If we can't decode it, leave as is
