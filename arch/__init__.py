@@ -62,8 +62,10 @@ def loadMachineModules():
             except AttributeError:
                 print "Error - could not find machine list for machine %s" % arch_modname
                 raise
-        except:
+        except Exception,e:
             print "Error, could not import machine %s, skipping" % arch_modname
+            print e
+
 
     return machine_list
 
