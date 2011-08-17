@@ -53,7 +53,8 @@ def follow(ds, ident):
             continue
 
         rc, dest_info = ds.infostore.lookup(segment.mapOut(j))
-        if rc != ds.infostore.LKUP_OK:
+
+        if rc == ds.infostore.LKUP_OVR:
             return None
 
         return segment.mapOut(j)
