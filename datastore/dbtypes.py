@@ -1,3 +1,6 @@
+import traceback
+
+
 class CommentPosition:
     POSITION_BEFORE = 0
     POSITION_RIGHT = 1
@@ -58,7 +61,21 @@ class MemoryInfo(object):
         if not decoder:
             return None
 
-        decoded = decoder.disassemble(addr, saved_params=saved_params)
+        try:
+            decoded = decoder.disassemble(addr, saved_params=saved_params)
+        except Exception:
+            decoded = None
+            traceback.print_exc()
+
+        if not decoded:
+            err_decoder = ds.decoder_lookup(ds, "error")
+            if not err_decoder:
+                raise NotImplementedError("""The 'error' datatype must be
+                implented'""")
+            decoded = err_decoder.disassemble(addr, length=length)
+
+            assert decoded
+
         assert decoded.length() == length
 
         m = MemoryInfo(
