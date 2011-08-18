@@ -243,7 +243,7 @@ class DisassemblyGraphicsView(QtGui.QWidget):
                 line_segname = segment.name + ":" if line_seg.name else ""
 
                 self.atv.addText(i, self.addrX,
-                    "%s%08x:" % (line_segname, line_segaddr),
+                    "%s%08x" % (line_segname, line_segaddr),
                     self.getStyle(STYLE_INTERNALERROR))
 
                 self.atv.addText(
