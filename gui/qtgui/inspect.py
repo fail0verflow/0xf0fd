@@ -48,7 +48,10 @@ class InspectModel(QtCore.QAbstractItemModel):
             return node
         # show cdict, disasm, persist_attribs
         self.root.addChild(dumpDict(TreeItem("cdict", ""), info.cdict))
-        self.root.addChild(TreeItem("disasm", str(info.disasm)))
+        try:
+            self.root.addChild(TreeItem("disasm", str(info.disasm)))
+        except:
+            pass
         self.root.addChild(dumpDict(TreeItem("persist_attribs", ""),
             info.persist_attribs))
 
