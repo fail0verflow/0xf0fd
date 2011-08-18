@@ -11,7 +11,9 @@ class DefaultMock(object):
             self.value = value
 
         def render(self, ds, segment):
-            return "0x%02x" % self.value, 0
+            if self.value != None:
+                return "0x%02x" % self.value, 0
+            return "?", 0
 
     class DisasmMock(object):
         def __init__(self, value):
@@ -25,7 +27,14 @@ class DefaultMock(object):
     def __init__(self, ds, addr):
         self.ds = ds
 
-        self.value = ds.readBytes(addr, 1)[0]
+        # If segment doesn't have defined data,
+        # readbytes returns None
+        v = ds.readBytes(addr, 1)
+        if v:
+            self.value = v[0]
+        else:
+            self.value = None
+
         self.disasm = DefaultMock.DisasmMock(self.value)
         self.typename = "default"
         self.typeclass = "default"

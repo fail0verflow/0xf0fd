@@ -74,7 +74,11 @@ class SegmentList(object):
             else:
                 raise AssertionError("unimplemented bitsize")
 
-            self.__data = array(atype, data)
+            if data:
+                self.__data = array(atype, data)
+            else:
+                self.__data = None
+
             self.__start_addr = start_addr
             self.__name = name
             self.__segno = segno
@@ -111,6 +115,9 @@ class SegmentList(object):
             if (seg_internal_start < self.__start_addr or
                 seg_internal_start >= self.__start_addr + self.__size):
                 raise IOError("not in segment")
+
+            if not self.__data:
+                return None
 
             return self.__data[
                 seg_internal_start - self.__start_addr:
@@ -164,8 +171,11 @@ class SegmentList(object):
                 '''SELECT segno, start_addr,
                 size, name, data, bits_per_unit FROM segments'''):
 
-            data = [ord(i) for i in zlib.decompress(data)]
-            data = util.pack_unpack_tools.byteListToInts(bits, data)
+            if data:
+                data = [ord(i) for i in zlib.decompress(data)]
+                data = util.pack_unpack_tools.byteListToInts(bits, data)
+            else:
+                data = None
 
             self.segments_cache.append(
                 SegmentList.Segment(start_addr, size, segno, name, data, bits))
@@ -202,10 +212,13 @@ class SegmentList(object):
         # Add it to the list of segments
         self.segments_cache.append(segment)
 
-        packed_data = util.pack_unpack_tools.intsToByteList(
-                segment.bitsize, segment.data)
-        dbstr = sqlite3.Binary(
-            zlib.compress("".join([chr(i) for i in packed_data])))
+        if data:
+            packed_data = util.pack_unpack_tools.intsToByteList(
+                    segment.bitsize, segment.data)
+            dbstr = sqlite3.Binary(
+                zlib.compress("".join([chr(i) for i in packed_data])))
+        else:
+            dbstr = ''
 
         self.__conn.execute(
             '''INSERT INTO segments
