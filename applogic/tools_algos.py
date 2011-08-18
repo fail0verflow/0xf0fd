@@ -4,10 +4,51 @@ import arch
 from arch.common.hacks import *
 import traceback
 
+import datastore.xreflist as xreflist
+
 
 # Attach hooks to notifications from datastore
 def registerFunctionality(ds):
     registerXrefChangeTracker(ds)
+
+
+def updateName(ds, ident):
+    s = ds.symbols.getSymbol(ident)
+    xrt = ds.xreflist.getXrefsTo(ident)
+
+    if s:
+        # If a symbol is set, it matches an autocreated symbol
+        #   and there are no xrefs, remove the name
+        # TODO - symbols should have a local flag
+        if s[0:4] in ("unk_", "loc_", "sub_") and not xrt:
+            ds.symbols.setSymbol(ident, "")
+        return
+
+    # Aggregate type information for new symbol
+    is_code = False
+    is_call = False
+
+    for i in xrt:
+        t = i.xref_type
+        if t & xreflist.XrefList.XREF_CODE:
+            is_code = True
+
+            if t & xreflist.XrefList.XREF_CODE_CALL:
+                is_call = True
+
+    # Generate a symbol name
+    addr = ds.segments.findSegment(ident).mapIn(ident)
+
+    if not is_code:
+        prefix = "unk"
+    else:
+        prefix = "loc"
+        if is_call:
+            prefix = "sub"
+
+    sym = "%s_%04x" % (prefix, addr)
+
+    ds.symbols.setSymbol(ident, sym)
 
 
 # Update Xref info cache when infostore changes
@@ -22,11 +63,16 @@ def registerXrefChangeTracker(ds):
             if status == ds.infostore.LKUP_OK:
                 buildXrefForInfo(ds, result)
 
+        xrs = ds.xreflist.getXrefsFrom(ident)
+        for i in xrs:
+            updateName(ds, i.ident_to)
+
     ds.infostore.infoChanged.connect(xrefChangeTracker)
 
 
 def buildXrefForInfo(ds, insn):
     segment = ds.segments.findSegment(insn.addr)
+
     for dest, typ in ((segment.mapOut(i), typ)
             for i, typ in insn.disasm.dests()):
 
