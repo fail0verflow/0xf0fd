@@ -156,13 +156,13 @@ class InfoStore(object):
 
             obj.ds_link = self.__changed
 
-            self.__memory_info_cache[addr] = obj
-
             if resultcode == self.LKUP_OK:
                 assert obj.addr == addr
 
             elif resultcode == self.LKUP_OVR:
                 assert obj.addr <= addr and obj.addr + obj.length > addr
+
+            self.__memory_info_cache[obj.addr] = obj
 
             return resultcode, obj
 
