@@ -121,7 +121,8 @@ class PIC24Machine(object):
 
         if op5 == 0xF:
             s = Fmt25(w0)
-            return PIC24Mov(pc, s.B, s.S, s.D)
+            return PIC24Mov(pc, PIC24Mov.b2s(s.B),
+                    s.S, s.D)
 
         else:
             aluOP = { 2:  PIC24Subr,
@@ -244,25 +245,29 @@ class PIC24Machine(object):
 
         soc = BITS(w0, 15, 5)
 
+        # 3 MOV.B.s
         if soc in (0xF, 0x1F, 0x7):
             if soc == 0x7:
                 s = Fmt5(w0)
                 if s.K.value > 0xFF:
                     return
-                return PIC24Mov(pc, s.B, s.K, s.D)
+                return PIC24Mov(pc, PIC24Mov.b2s(s.B),
+                        s.K, s.D)
 
             elif soc == 0xF:
                 s = Fmt3(w0)
-                return PIC24Mov(pc, s.B, OpW(0), s.F)
+                return PIC24Mov(pc, PIC24Mov.b2s(s.B),
+                        OpW(0), s.F)
 
             elif soc == 0x1F:
                 s = Fmt3(w0)
 
                 if not s.D:
-                    return PIC24Mov(pc, s.B, s.F, OpW(0))
-                return PIC24Mov(pc, s.B, s.F)
+                    return PIC24Mov(pc, PIC24Mov.b2s(s.B),
+                            s.F, OpW(0))
+                return PIC24Mov(pc, PIC24Mov.b2s(s.B),
+                        s.F)
 
-            raise NotImplementedError("strange moves")
 
         # B {0-F} ALU ops
         elif not soc & 0x10:
@@ -291,9 +296,63 @@ class PIC24Machine(object):
 
             return op(pc, s.B, s.src, s.D)
 
+        elif soc in (0x1C, 0x1D):
+            s = Fmt1(w0)
+            if w0 & 0xF800 == 0:
+                return PIC24Mov(pc, 4, s.S, s.D)
+            elif w0 & 0xFFF1 == 0x9F80:
+                return PIC24Push(pc, 4, s.S)
+
         else:
             raise NotImplementedError("ext 0xB")
 
+    def decode_D(self, pc, w0):
+        a_op = {
+              0: PIC24Sl,
+              2: PIC24Lsr,
+              3: PIC24Asr,
+              4: PIC24Rlnc,
+              5: PIC24Rlc,
+              6: PIC24Rrnc,
+              7: PIC24Rrc
+              }
+
+
+        soc = BITS(w0, 15, 5)
+
+        if not soc & 0x10:
+            op = soc & 7
+            if op == 1:
+                return
+
+            opc = a_op[op]
+
+            if soc & 0x8:
+                s = Fmt3(w0)
+                src = s.F
+                dest = None
+                if not s.D:
+                    dest = OpW(0)
+            else:
+                s = Fmt2(w0)
+                src = s.S
+                dest = s.D
+
+            return opc(pc, s.B, src, dest)
+
+        elif soc in (0x1A, 0x1C, 0x1D):
+            s = Fmt15(w0)
+
+            if soc == 0x1A:
+                opc = PIC24Sl
+            elif soc == 0x1C:
+                opc = PIC24Lsr
+            elif soc == 0x1D:
+                opc = PIC24Asr
+
+            return opc(pc, False, s.W, s.D, s.src)
+
+        raise NotImplementedError("0xB FBCL and DIV")
 
     def disasm_helper(self, pc, source):
         w1 = None
@@ -319,7 +378,7 @@ class PIC24Machine(object):
         # Mov #lit16, wND
         elif opc == 0x2:
             s = Fmt9(w0)
-            return PIC24Mov(pc, False, s.K, s.D)
+            return PIC24Mov(pc, 2, s.K, s.D)
 
         elif opc == 0x3:
             return self.decodeBRA(pc, w0)
@@ -333,21 +392,33 @@ class PIC24Machine(object):
             if BIT(w0, 19):
                 ops = ops[::-1]
 
-            return PIC24Mov(pc, False, *ops)
+            return PIC24Mov(pc, 2, *ops)
+
+        elif opc == 0x9:
+            s = Fmt11(w0)
+            return PIC24Mov(pc, PIC24Mov.b2s(s.B),
+                    s.src, s.dst)
 
         elif opc == 0xA:
             return self.decode_A(pc, w0)
 
         elif opc == 0xB:
             return self.decode_B(pc, w0)
+
         elif opc == 0xC:
             raise NotImplementedError("DSP Ops")
+
+        elif opc == 0xD:
+            return self.decode_D(pc, w0)
 
         elif opc == 0xE:
             return self.decode_E(pc, w0)
 
         elif w0 == 0xFE0000:
             return PIC24Reset()
+
+        else:
+            raise NotImplementedError("all others")
 
     def disassemble(self, pc, source):
         o = self.disasm_helper(pc, source)

@@ -128,7 +128,32 @@ def Fmt10(w0):
     return s
 
 def Fmt11(word):
-    raise NotImplementedError
+    s = _stub()
+
+    _S = BITS(word, 0, 4)
+    _D = BITS(word, 7, 4)
+
+    _K = BITS(word, 4, 3) | \
+            BITS(word, 11, 3) << 3 | \
+            BITS(word, 15, 4) << 6
+
+    _K = BITS(_K, 0, 10, True)
+
+    _B = BIT(word, 14)
+
+    flg = BIT(word, 19)
+
+    if not flg:
+        s.src = OpW_disp(_S, _K)
+        s.dst = OpW(_D)
+    else:
+        s.src = OpW(_S)
+        s.dst = OpW_disp(_D, _K)
+
+    s.B = _B
+
+    return s
+
 
 def Fmt12(w0):
     s = _stub()
@@ -163,8 +188,25 @@ def Fmt13(w0):
 def Fmt14(word):
     raise NotImplementedError
 
-def Fmt15(word):
-    raise NotImplementedError
+def Fmt15(w0):
+    s = _stub()
+    _W = BITS(w0, 11, 4)
+    _D = BITS(w0, 7, 4)
+
+    flg = BIT(w0, 6)
+
+    s.W = OpW(_W)
+    s.D = OpW(_D)
+
+    if flg:
+        _K = BITS(w0, 0, 4)
+        s.src = OpK(4, _K)
+    else:
+        _S = BITS(w0, 0, 4)
+        s.src = OpK(4, _S)
+
+    return s
+
 
 def Fmt16(word):
     raise NotImplementedError

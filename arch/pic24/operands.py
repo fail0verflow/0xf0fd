@@ -58,6 +58,15 @@ class OpWInd(Operand):
 
         return "W%d" % (self.__n), TYPE_UNSPEC
 
+class OpW_disp(Operand):
+    def __init__(self, w, k):
+        self.__w = w
+        self.__k = k
+
+    def render(self, ds, segment):
+        return "[W%d %c %04x]" % (self.__w,
+                '+' if self.__k > 0 else '-',
+                abs(self.__k)), TYPE_UNSPEC
 
 class OpW(OpWInd):
     def __init__(self, n):

@@ -108,9 +108,19 @@ class PIC24CP0(object):
 
 
 class PIC24Mov(object):
-    opcode = "mov"
+    SZ_B = 1
+    SZ_W = 2
+    SZ_D = 4
 
-    def __init__(self, pc, b_flag, src, dst=None):
+
+    @staticmethod
+    def b2s(b):
+        if b: return PIC24Mov.SZ_B
+        return PIC24Mov.SZ_W
+
+    def __init__(self, pc, size, src, dst=None):
+        assert size in (1,2,4)
+
         self.length = 2
 
         self.dests = [(pc + self.length, REL_JUMP)]
@@ -118,6 +128,33 @@ class PIC24Mov(object):
         if dst:
             self.operands += [dst]
 
+        self.opcode = "mov"
+
+        if size == self.SZ_B:
+            self.opcode += ".b"
+        elif size == self.SZ_D:
+            self.opcode += ".d"
+
+
+class PIC24Push(object):
+    SZ_B = 1
+    SZ_W = 2
+    SZ_D = 4
+
+    def __init__(self, pc, size, src):
+        assert size in (1,2,4)
+
+        self.length = 2
+
+        self.dests = [(pc + self.length, REL_JUMP)]
+        self.operands = [src]
+
+        self.opcode = "push"
+
+        if size == self.SZ_B:
+            self.opcode += ".b"
+        elif size == self.SZ_D:
+            self.opcode += ".d"
 
 
 #############################
@@ -133,7 +170,7 @@ class PIC24BitInst1(object):
         elif c_z_flag == "b":
             self.opcode += ".c"
         elif c_z_flag == "z":
-            self.opcode += ".Z"
+            self.opcode += ".z"
 
         assert not (b_flag and c_z_flag)
 
@@ -189,7 +226,7 @@ class PIC24ALU(object):
         self.opcode = self.mnem
 
         if b_flag:
-            self.opcode += ".B"
+            self.opcode += ".b"
 
 class PIC24Subr(PIC24ALU):
     mnem = "subr"
@@ -233,7 +270,7 @@ class PIC24Compare(object):
         self.opcode = self.mnem
 
         if b_flag:
-            self.opcode += ".B"
+            self.opcode += ".b"
 
 class PIC24Cp0(PIC24Compare):
     mnem = "cp0"
@@ -258,7 +295,7 @@ class PIC24SimpleALU(object):
         self.opcode = self.mnem
 
         if b_flag:
-            self.opcode += ".B"
+            self.opcode += ".b"
 
 class PIC24Inc(PIC24SimpleALU):
     mnem = "inc"
@@ -292,7 +329,7 @@ class PIC24TblOp(object):
         self.dests = [(self.length + pc, REL_JUMP)]
         self.opcode = self.mnem
         if b_flag:
-            self.opcode += ".B"
+            self.opcode += ".b"
 
 class PIC24Tblrdl(PIC24TblOp):
     mnem = "tblrdl"
@@ -305,4 +342,43 @@ class PIC24Tblwtl(PIC24TblOp):
 
 class PIC24Tblwth(PIC24TblOp):
     mnem = "tblwth"
+
+# Shifts
+class PIC24Shift(object):
+    def __init__(self, pc, b_flag, src1, dest = None, by=None):
+        self.length = 2
+        self.operands = [src1]
+
+        if by:
+            self.operands += [by]
+
+        if dest:
+            self.operands += [dest]
+
+        self.dests = [(pc + self.length, REL_JUMP)]
+        self.opcode = self.mnem
+
+        if b_flag:
+            self.opcode += ".b"
+
+class PIC24Sl(PIC24Shift):
+    mnem = "sl"
+
+class PIC24Lsr(PIC24Shift):
+    mnem = "lsr"
+
+class PIC24Asr(PIC24Shift):
+    mnem = "asr"
+
+class PIC24Rlnc(PIC24Shift):
+    mnem = "rlnc"
+
+class PIC24Rlc(PIC24Shift):
+    mnem = "rlc"
+
+class PIC24Rrnc(PIC24Shift):
+    mnem = "rrnc"
+
+class PIC24Rrc(PIC24Shift):
+    mnem = "rrc"
 
