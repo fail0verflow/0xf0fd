@@ -38,8 +38,7 @@ class AddCommentWindow(QtWidgets.QDialog):
 
         okButton = QtWidgets.QPushButton("OK")
         okButton.setDefault(True)
-        QtCore.QObject.connect(okButton,
-            QtCore.SIGNAL('clicked()'), self.accept)
+        okButton.clicked.connect(self.accept)
 
         buttonBox = QtWidgets.QDialogButtonBox(QtCore.Qt.Vertical)
         buttonBox.addButton(okButton, QtWidgets.QDialogButtonBox.ActionRole)
