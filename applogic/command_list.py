@@ -4,7 +4,7 @@ class CommandList(object):
     def __init__(self, datastore):
         self.datastore = datastore
         self.cmds = []
-        self.forward = []
+        self.cmds_forward = []
 
         self.wrap_stack = []
 
@@ -28,6 +28,7 @@ class CommandList(object):
     def push(self, cmd):
         self.cmds.append(cmd)
         cmd.execute(self.datastore)
+        self.cmds_forward = []
 
     def rewind(self, n):
 
@@ -36,4 +37,12 @@ class CommandList(object):
         for i in xrange(n_to_do):
             c = self.cmds.pop()
             c.undo(self.datastore)
-            self.forward.append(c)
+            self.cmds_forward.append(c)
+
+    def forward(self, n):
+        n_to_do = min(n, len(self.cmds_forward))
+
+        for i in xrange(n_to_do):
+            c = self.cmds_forward.pop()
+            self.cmds.append(c)
+            c.execute(self.datastore)

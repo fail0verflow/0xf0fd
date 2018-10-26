@@ -96,7 +96,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.disassemblyWidget.update()
 
     def doRedo(self):
-        pass
+        self.datastore.cmdlist.forward(1)
+        self.disassemblyWidget.update()
 
     def doAddBinary(self):
         # FIXME: use command pattern
