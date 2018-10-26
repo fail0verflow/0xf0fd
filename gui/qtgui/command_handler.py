@@ -42,7 +42,7 @@ class CommandHandler(object):
         oldlabel = self.ds.symbols.getSymbol(ident)
 
         # FIXME: replace ident with SECTION:addr
-        text, ok = QtGui.QInputDialog.getText(None,
+        text, ok = QtWidgets.QInputDialog.getText(None,
             "Set Label", "Enter a label for addr %04x" % ident, text=oldlabel)
 
         if ok and text != oldlabel:
