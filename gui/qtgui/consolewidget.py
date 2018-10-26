@@ -1,4 +1,4 @@
-from PySide import QtCore, QtGui
+from PyQt5 import QtCore, QtGui, QtWidgets
 from subviewbase import SubViewBase
 
 import StringIO
@@ -38,10 +38,10 @@ class output_to_console(object):
             self.ocb(2, exc)
 
 
-class MyLineEdit(QtGui.QLineEdit):
-    keyUpEvent = QtCore.Signal()
-    keyDownEvent = QtCore.Signal()
-    keyTabEvent = QtCore.Signal()
+class MyLineEdit(QtWidgets.QLineEdit):
+    keyUpEvent = QtCore.pyqtSignal()
+    keyDownEvent = QtCore.pyqtSignal()
+    keyTabEvent = QtCore.pyqtSignal()
 
     def __init__(self, *args, **kwargs):
         super(MyLineEdit, self).__init__()
@@ -77,8 +77,8 @@ class MyLineEdit(QtGui.QLineEdit):
             super(MyLineEdit, self).keyPressEvent(evt)
 
 
-class ConsoleWidget(QtGui.QWidget):
-    actionOccurred = QtCore.Signal()
+class ConsoleWidget(QtWidgets.QWidget):
+    actionOccurred = QtCore.pyqtSignal()
 
     def __init__(self, parent_win, ds):
         super(ConsoleWidget, self).__init__()
@@ -87,7 +87,7 @@ class ConsoleWidget(QtGui.QWidget):
 
         self.history = []
 
-        self.layout = QtGui.QVBoxLayout()
+        self.layout = QtWidgets.QVBoxLayout()
 
         self.ctx = {
                     'main_win': self.main_win,
@@ -97,7 +97,7 @@ class ConsoleWidget(QtGui.QWidget):
 
         self.cons = code.InteractiveConsole(self.ctx)
 
-        self.output = QtGui.QTextEdit()
+        self.output = QtWidgets.QTextEdit()
         self.output.setReadOnly(True)
         self.output.setFontPointSize(10)
 

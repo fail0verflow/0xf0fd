@@ -1,4 +1,4 @@
-from PySide import QtGui, QtCore
+from PyQt5 import QtCore, QtGui, QtWidgets
 
 
 class SubViewManager(object):
@@ -9,7 +9,7 @@ class SubViewManager(object):
         self.svl = [i(self, self.__mw) for i in
                 SubViewEntryBase.__subclasses__()]
 
-        self.viewmenu = QtGui.QMenu("View", self.__mw)
+        self.viewmenu = QtWidgets.QMenu("View", self.__mw)
 
         for ins in self.svl:
             a = self.viewmenu.addAction(QtGui.QIcon(), ins.menuname,

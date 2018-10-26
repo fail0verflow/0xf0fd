@@ -1,4 +1,4 @@
-from PySide import QtCore, QtGui
+from PyQt5 import QtCore, QtGui, QtWidgets
 
 
 class TreeItem(object):
@@ -103,14 +103,14 @@ class InspectModel(QtCore.QAbstractItemModel):
         return self.createIndex(parentItem.row, 0, parentItem)
 
 
-class InspectWidget(QtGui.QWidget):
+class InspectWidget(QtWidgets.QWidget):
     def __init__(self, info):
         super(InspectWidget, self).__init__()
         self.treeview = QtGui.QTreeView()
         self.model = InspectModel(info)
         self.treeview.setModel(self.model)
 
-        mainLayout = QtGui.QHBoxLayout()
+        mainLayout = QtWidgets.QHBoxLayout()
         mainLayout.addWidget(self.treeview)
         self.setWindowTitle("Inspector for %04x" % info.addr)
         self.setLayout(mainLayout)
@@ -118,7 +118,7 @@ class InspectWidget(QtGui.QWidget):
         self.treeview.setColumnWidth(0, 200)
 
 
-class InspectWindow(QtGui.QDockWidget):
+class InspectWindow(QtWidgets.QDockWidget):
     def __init__(self, info):
         super(InspectWindow, self).__init__("Inspector")
         self.widget = InspectWidget(info)

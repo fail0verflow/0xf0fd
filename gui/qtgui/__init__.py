@@ -2,7 +2,7 @@ import sys
 import os
 import os.path
 
-from PySide import QtCore, QtGui
+from PyQt5 import QtCore, QtGui, QtWidgets
 
 from datastore import DataStore
 from arch.shared_opcode_types import *
@@ -13,47 +13,47 @@ from mainwindow import MainWindow
 import arch
 
 
-class ArchPromptWindow(QtGui.QWidget):
+class ArchPromptWindow(QtWidgets.QWidget):
     def __init__(self, callback):
         super(ArchPromptWindow, self).__init__()
         self.resize(500, 200)
 
         self.callback = callback
 
-        ob = QtGui.QVBoxLayout()
+        ob = QtWidgets.QVBoxLayout()
 
-        hbox = QtGui.QHBoxLayout()
+        hbox = QtWidgets.QHBoxLayout()
         ob.addLayout(hbox)
 
-        controlsBox = QtGui.QVBoxLayout()
+        controlsBox = QtWidgets.QVBoxLayout()
         hbox.addLayout(controlsBox)
 
         # Friendly wizard
         img = QtGui.QPixmap("resources/wizard.png")
-        imglabel = QtGui.QLabel()
+        imglabel = QtWidgets.QLabel()
         imglabel.setPixmap(img)
         hbox.addStretch()
         hbox.addWidget(imglabel)
 
         # Add text labels
-        textlabel = QtGui.QLabel(
+        textlabel = QtWidgets.QLabel(
             "It looks like you're starting a new database!")
 
-        textlabel2 = QtGui.QLabel("Select an architecture:")
+        textlabel2 = QtWidgets.QLabel("Select an architecture:")
         controlsBox.addWidget(textlabel)
         controlsBox.addWidget(textlabel2)
 
         # Add arch selection box
         mns = arch.machineNames()
-        self.qcb = QtGui.QComboBox()
+        self.qcb = QtWidgets.QComboBox()
         for i in mns:
             self.qcb.addItem(arch.machine_list[i].longname, i)
         controlsBox.addWidget(self.qcb)
         controlsBox.addStretch()
 
         # launch button
-        bbox = QtGui.QHBoxLayout()
-        okBtn = QtGui.QPushButton("Launch!")
+        bbox = QtWidgets.QHBoxLayout()
+        okBtn = QtWidgets.QPushButton("Launch!")
         okBtn.clicked.connect(self.launchClick)
         bbox.addStretch()
         bbox.addWidget(okBtn)
@@ -108,7 +108,7 @@ class QTGui(object):
 
         self.filename = filenames[0]
 
-        self.app = QtGui.QApplication(sys.argv)
+        self.app = QtWidgets.QApplication(sys.argv)
 
         if not os.path.exists(self.filename):
             # File doesn't exist, show arch

@@ -1,7 +1,7 @@
 import time
 import traceback
 
-from PySide import QtCore, QtGui
+from PyQt5 import QtCore, QtGui, QtWidgets
 from arch.shared_opcode_types import *
 
 # TODO: Removeme
@@ -21,9 +21,9 @@ STYLE_XREF = 0x8000A
 TA = FDTextAttribs
 
 
-class DisassemblyGraphicsView(QtGui.QWidget):
+class DisassemblyGraphicsView(QtWidgets.QWidget):
     def __init__(self, ds, mapper):
-        QtGui.QWidget.__init__(self)
+        QtWidgets.QWidget.__init__(self)
 
         self.addrX = 0
         self.labelX = 18

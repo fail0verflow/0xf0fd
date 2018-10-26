@@ -1,5 +1,5 @@
 from disassemblyview import DisassemblyGraphicsView
-from PySide import QtCore, QtGui
+from PyQt5 import QtCore, QtGui, QtWidgets
 from command_handler import *
 from datastore import InfoStore
 
@@ -31,7 +31,7 @@ class SegmentLineMapper(object):
         raise ValueError("Address could not be mapped")
 
 
-class DisassemblyWidget(QtGui.QAbstractScrollArea):
+class DisassemblyWidget(QtWidgets.QAbstractScrollArea):
     def __init__(self, parent, gui, ds, user_proxy):
         super(DisassemblyWidget, self).__init__(parent)
         self.window_up = parent
@@ -52,8 +52,7 @@ class DisassemblyWidget(QtGui.QAbstractScrollArea):
         self.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOn)
 
         # Connect scrolling to update the view
-        QtCore.QObject.connect(self.vscroll,
-            QtCore.SIGNAL('valueChanged(int)'), self.scrollEvent)
+        self.vscroll.valueChanged[int].connect(self.scrollEvent)
 
     def reconfigureScrollBars(self):
         self.vscroll = self.verticalScrollBar()
@@ -120,7 +119,7 @@ class DisassemblyWidget(QtGui.QAbstractScrollArea):
         self.view.update()
 
     # With silly tuple hack to work around PySide bugs
-    @QtCore.Slot(tuple)
+    @QtCore.pyqtSlot(tuple)
     def navigateToIdentSL(self, val):
         self.navigateToIdent(val[0])
 
@@ -138,7 +137,7 @@ class DisassemblyWidget(QtGui.QAbstractScrollArea):
             self.setTopSelectedIdent(val)
 
     # Hack to work around Pyside forcing longs->ints
-    @QtCore.Slot(tuple)
+    @QtCore.pyqtSlot(tuple)
     def setTopSelectedIdentSL(self, tup):
         self.setTopSelectedIdent(tup[0])
 

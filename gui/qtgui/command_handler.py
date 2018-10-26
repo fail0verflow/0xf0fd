@@ -6,8 +6,7 @@ from applogic.cmd.command import *
 from datastore import CommentPosition
 from inspect import InspectWindow
 
-from PySide import QtCore
-from PySide import QtGui
+from PyQt5 import QtCore, QtGui, QtWidgets
 from dialogs import *
 
 

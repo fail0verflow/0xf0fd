@@ -1,8 +1,8 @@
-from PySide import QtGui, QtCore
+from PyQt5 import QtCore, QtGui, QtWidgets
 
 
-class SubViewBase(QtGui.QDockWidget):
-    closed = QtCore.Signal()
+class SubViewBase(QtWidgets.QDockWidget):
+    closed = QtCore.pyqtSignal()
 
     def __init__(self, *args, **kwargs):
         super(SubViewBase, self).__init__(*args, **kwargs)

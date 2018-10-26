@@ -1,31 +1,30 @@
-from PySide import QtCore
-from PySide import QtGui
+from PyQt5 import QtCore, QtGui, QtWidgets
 from applogic import util
 
 
-class XrefSelectionWindow(QtGui.QDialog):
+class XrefSelectionWindow(QtWidgets.QDialog):
     def __init__(self, ds, xreflist):
         super(XrefSelectionWindow, self).__init__()
 
         self.__xrl = xreflist
 
-        self.formLayout = QtGui.QVBoxLayout()
+        self.formLayout = QtWidgets.QVBoxLayout()
 
-        self.okButton = QtGui.QPushButton("OK")
+        self.okButton = QtWidgets.QPushButton("OK")
         self.okButton.setDefault(True)
         self.okButton.clicked.connect(self.accept)
 
-        self.xrsw = QtGui.QListWidget()
+        self.xrsw = QtWidgets.QListWidget()
 
         # Add formatted xrefs to xref window
         for i in xreflist:
-            QtGui.QListWidgetItem(
-                    util.formatIdent(ds, i.ident_from), self.xrsw)
+            QtWidgets.QListWidgetItem(
+                util.formatIdent(ds, i.ident_from), self.xrsw)
 
         self.xrsw.setCurrentRow(0)
 
-        buttonBox = QtGui.QDialogButtonBox(QtCore.Qt.Vertical)
-        buttonBox.addButton(self.okButton, QtGui.QDialogButtonBox.ActionRole)
+        buttonBox = QtWidgets.QDialogButtonBox(QtCore.Qt.Vertical)
+        buttonBox.addButton(self.okButton, QtWidgets.QDialogButtonBox.ActionRole)
 
         self.formLayout.addWidget(self.xrsw)
         self.formLayout.addWidget(buttonBox)

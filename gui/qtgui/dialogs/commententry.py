@@ -1,16 +1,15 @@
-from PySide import QtCore
-from PySide import QtGui
+from PyQt5 import QtCore, QtGui, QtWidgets
 from datastore import CommentPosition
 
 
-class CommentEntryTextField(QtGui.QTextEdit):
+class CommentEntryTextField(QtWidgets.QTextEdit):
 
     # Signal that indicates magic-exit keystroke was entered
     # to terminate dialog
-    magicExitPressed = QtCore.Signal()
+    magicExitPressed = QtCore.pyqtSignal()
 
     def __init__(self, *args, **kwargs):
-        QtGui.QTextEdit.__init__(self, *args, **kwargs)
+        QtWidgets.QTextEdit.__init__(self, *args, **kwargs)
 
     def keyPressEvent(self, evt):
 
@@ -27,7 +26,7 @@ class CommentEntryTextField(QtGui.QTextEdit):
         super(CommentEntryTextField, self).keyPressEvent(evt)
 
 
-class AddCommentWindow(QtGui.QDialog):
+class AddCommentWindow(QtWidgets.QDialog):
     def __init__(self, position, oldcomment):
         super(AddCommentWindow, self).__init__()
 
@@ -37,20 +36,19 @@ class AddCommentWindow(QtGui.QDialog):
             CommentPosition.POSITION_BOTTOM: "Post-line comment"
             }[position]
 
-        okButton = QtGui.QPushButton("OK")
+        okButton = QtWidgets.QPushButton("OK")
         okButton.setDefault(True)
         QtCore.QObject.connect(okButton,
             QtCore.SIGNAL('clicked()'), self.accept)
 
-        buttonBox = QtGui.QDialogButtonBox(QtCore.Qt.Vertical)
-        buttonBox.addButton(okButton, QtGui.QDialogButtonBox.ActionRole)
+        buttonBox = QtWidgets.QDialogButtonBox(QtCore.Qt.Vertical)
+        buttonBox.addButton(okButton, QtWidgets.QDialogButtonBox.ActionRole)
 
-        self.formLayout = QtGui.QFormLayout()
-        self.positionLabel = QtGui.QLabel(positionText)
+        self.formLayout = QtWidgets.QFormLayout()
+        self.positionLabel = QtWidgets.QLabel(positionText)
         self.edit = CommentEntryTextField(oldcomment)
 
-        QtCore.QObject.connect(self.edit,
-            QtCore.SIGNAL('magicExitPressed()'), self.accept)
+        self.edit.magicExitPressed.connect(self.accept)
 
         self.formLayout.addRow("&Position:", self.positionLabel)
         self.formLayout.addRow("&Comment text:", self.edit)

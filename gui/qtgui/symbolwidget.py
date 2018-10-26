@@ -1,4 +1,4 @@
-from PySide import QtCore, QtGui
+from PyQt5 import QtCore, QtGui, QtWidgets
 from subviewbase import SubViewBase
 
 
@@ -12,12 +12,12 @@ class SymbolModel(QtCore.QAbstractItemModel):
         self.datastore.symbols.symbolsChanged.connect(self.symbolsChanged)
 
     def symbolsChanged(self):
-        self.emit(QtCore.SIGNAL("layoutAboutToBeChanged()"))
-        self.emit(QtCore.SIGNAL("layoutChanged()"))
+        self.layoutAboutToBeChanged.emit()
+        self.layoutChanged.emit()
 
     def sort(self, col_num, order):
         assert col_num in [0, 1]
-        self.emit(QtCore.SIGNAL("layoutAboutToBeChanged()"))
+        self.layoutAboutToBeChanged.emit()
 
         self.order = {
                        0: 'name',
@@ -28,7 +28,7 @@ class SymbolModel(QtCore.QAbstractItemModel):
                        QtCore.Qt.AscendingOrder: 'ASC',
                        QtCore.Qt.DescendingOrder: 'DESC'}[order]
 
-        self.emit(QtCore.SIGNAL("layoutChanged()"))
+        self.layoutChanged.emit()
 
     def headerData(self, section, orientation, role):
         if role == QtCore.Qt.DisplayRole:
@@ -71,12 +71,12 @@ class SymbolModel(QtCore.QAbstractItemModel):
         return None
 
 
-class SymbolTableView(QtGui.QTableView):
+class SymbolTableView(QtWidgets.QTableView):
 
     # HACK: PYSide forces longs to ints which breaks
     # on 32 bit machines. box it up in a tuple for safe
     # transport
-    symbolSelected = QtCore.Signal(tuple)
+    symbolSelected = QtCore.pyqtSignal(tuple)
 
     def __init__(self, parent_win, ds):
         super(SymbolTableView, self).__init__()
@@ -101,8 +101,8 @@ class SymbolTableView(QtGui.QTableView):
         hh = self.horizontalHeader()
         hh.setHighlightSections(False)
 
-        self.setSelectionMode(QtGui.QAbstractItemView.SingleSelection)
-        self.setSelectionBehavior(QtGui.QAbstractItemView.SelectRows)
+        self.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
+        self.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
 
     def selectionChanged(self, selected, deselected):
         super(SymbolTableView, self).selectionChanged(selected, deselected)

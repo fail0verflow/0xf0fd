@@ -2,7 +2,7 @@ from symbolwidget import SymbolWidget
 from consolewidget import ConsoleSubView
 from subviewmgr import SubViewEntryBase
 
-from PySide import QtCore
+from PyQt5 import QtCore, QtGui, QtWidgets
 
 
 class SymbolWidgetSubViewEntry(SubViewEntryBase):

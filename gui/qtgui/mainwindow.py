@@ -1,4 +1,4 @@
-from PySide import QtGui, QtCore
+from PyQt5 import QtCore, QtGui, QtWidgets
 
 from subviewmgr import SubViewManager
 
@@ -15,7 +15,7 @@ import applogic.tools_loaders
 import json
 
 
-class AddBinaryPromptWindow(QtGui.QDialog):
+class AddBinaryPromptWindow(QtWidgets.QDialog):
     def __init__(self):
         super(AddBinaryPromptWindow, self).__init__()
 
@@ -25,19 +25,18 @@ class AddBinaryPromptWindow(QtGui.QDialog):
         # TODO: add cancel button
 
         # TODO: remove close and make act like a normal dialog
-        okButton = QtGui.QPushButton("OK")
+        okButton = QtWidgets.QPushButton("OK")
         okButton.setDefault(True)
-        QtCore.QObject.connect(okButton,
-            QtCore.SIGNAL('clicked()'), self.accept)
+        okButton.clicked.connect(self.accept)
 
-        buttonBox = QtGui.QDialogButtonBox(QtCore.Qt.Vertical)
-        buttonBox.addButton(okButton, QtGui.QDialogButtonBox.ActionRole)
+        buttonBox = QtWidgets.QDialogButtonBox(QtCore.Qt.Vertical)
+        buttonBox.addButton(okButton, QtWidgets.QDialogButtonBox.ActionRole)
 
-        self.formLayout = QtGui.QFormLayout()
-        self.baseEdit = QtGui.QLineEdit("0x0")
-        self.startEdit = QtGui.QLineEdit("0x0")
-        self.lengthEdit = QtGui.QLineEdit("-1")
-        self.bitsEdit = QtGui.QLineEdit("8")
+        self.formLayout = QtWidgets.QFormLayout()
+        self.baseEdit = QtWidgets.QLineEdit("0x0")
+        self.startEdit = QtWidgets.QLineEdit("0x0")
+        self.lengthEdit = QtWidgets.QLineEdit("-1")
+        self.bitsEdit = QtWidgets.QLineEdit("8")
 
         self.formLayout.addRow("&Base Address:", self.baseEdit)
         self.formLayout.addRow("&Start Offset:", self.startEdit)
@@ -50,14 +49,14 @@ class AddBinaryPromptWindow(QtGui.QDialog):
         self.setWindowModality(QtCore.Qt.ApplicationModal)
 
 
-class MainWindow(QtGui.QMainWindow):
+class MainWindow(QtWidgets.QMainWindow):
     def __init__(self, gui, filename):
         super(MainWindow, self).__init__()
         self.gui = gui
         self.datastore = gui.ds
         self.user_proxy = gui.user_ds
 
-        self.__menuBar = QtGui.QMenuBar(self)
+        self.__menuBar = QtWidgets.QMenuBar(self)
 
         # File menu
         menuStructure = [
@@ -74,10 +73,11 @@ class MainWindow(QtGui.QMainWindow):
                 ]
 
         for menuname, entries in menuStructure:
-            m = QtGui.QMenu(menuname, self)
+            m = QtWidgets.QMenu(menuname, self)
             for itemname, action, seq in entries:
-                a = m.addAction(QtGui.QIcon(), itemname, None,
-                        QtGui.QKeySequence(seq))
+                a = m.addAction(QtGui.QIcon(), itemname)
+                if seq:
+                    a.shortcut = QtGui.QKeySequence(seq)
                 a.triggered.connect(action)
 
             self.menuBar().addMenu(m)
@@ -100,7 +100,7 @@ class MainWindow(QtGui.QMainWindow):
 
     def doAddBinary(self):
         # FIXME: use command pattern
-        filename, filter = QtGui.QFileDialog.getOpenFileName()
+        filename, filter = QtWidgets.QFileDialog.getOpenFileName()
         if not filename:
             return
 
@@ -116,7 +116,7 @@ class MainWindow(QtGui.QMainWindow):
 
     def doAddIHEX(self):
         # FIXME: use command pattern
-        filename, filter = QtGui.QFileDialog.getOpenFileName()
+        filename, filter = QtWidgets.QFileDialog.getOpenFileName()
         if filename:
             applogic.tools_loaders.addIHex(self.datastore, filename)
 
@@ -124,7 +124,7 @@ class MainWindow(QtGui.QMainWindow):
     # Useful for importing from other tools, or when the DB format
     # has been very much broken
     def doAddProps(self):
-        filename, filter = QtGui.QFileDialog.getOpenFileName()
+        filename, filter = QtWidgets.QFileDialog.getOpenFileName()
         if not filename:
             return
         ostruct = json.load(open(filename))

@@ -1,4 +1,4 @@
-from PySide import QtGui, QtCore
+from PyQt5 import QtCore, QtGui, QtWidgets
 
 STYLE_ARROW_FWD = 0x80004
 STYLE_ARROW_BACK = 0x80005
@@ -142,6 +142,9 @@ class FDArrowView(object):
     def arrow_dir_same(self, a, b):
         if a.dst == a.src or b.dst == b.src:
             return True
+        ## FIXME: Correct?
+        if a.dst is None or a.src is None or b.dst is None or b.src is None:
+            return False
         return ((a.dst - a.src) > 0) == ((b.dst - b.src) > 0)
 
     def render(self, p, addr_line_map):
