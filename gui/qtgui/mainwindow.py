@@ -93,10 +93,12 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def doUndo(self):
         self.datastore.cmdlist.rewind(1)
+        self.datastore.flush()
         self.disassemblyWidget.update()
 
     def doRedo(self):
         self.datastore.cmdlist.forward(1)
+        self.datastore.flush()
         self.disassemblyWidget.update()
 
     def doAddBinary(self):
